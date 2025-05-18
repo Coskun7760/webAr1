@@ -2,18 +2,16 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MindAR Kalıcı Model</title>
+    <title>MindAR Kalıcı Model Örneği</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   </head>
   <body>
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind"
+      mindar-image="imageTargetSrc: ./targets.mind;"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
       embedded
     >
       <a-assets>
@@ -22,28 +20,35 @@
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- Görsel hedef (sadece bir kez tetikler) -->
-      <a-entity mindar-image-target="targetIndex: 0" id="marker"></a-entity>
-
-      <!-- Modelin ekleneceği alan -->
-      <a-entity id="model-holder"></a-entity>
+      <!-- Hedef entity, model önce burada yüklenecek -->
+      <a-entity mindar-image-target="targetIndex: 0" id="marker">
+        <a-gltf-model
+        
+          src="#model"
+          position="0 -0.1 0"
+          scale="1 1 1"
+        ></a-gltf-model>
+      </a-entity>
     </a-scene>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const marker = document.querySelector("#marker");
-        const holder = document.querySelector("#model-holder");
+        const model = document.querySelector("#model");
+        const scene = document.querySelector("a-scene");
 
         marker.addEventListener("targetFound", () => {
-          // Daha önce eklendiyse yeniden ekleme
-          if (document.querySelector("#permanent-model")) return;
+          // Modeli marker dışına çıkar
+          if (model.parentElement !== scene) {
+            scene.appendChild(model);
+            // Modeli sabit bir pozisyona koy (kameraya göre)
+            model.setAttribute("position", "0 -0.1 -1.5");
+            model.setAttribute("scale", "1 1 1");
+          }
+        });
 
-          const model = document.createElement("a-gltf-model");
-          model.setAttribute("id", "permanent-model");
-          model.setAttribute("src", "#model");
-          model.setAttribute("scale", "1 1 1");
-          model.setAttribute("position", "0 -0.1 -1.5"); // Kameranın önünde görünmesi için
-          holder.appendChild(model);
+        marker.addEventListener("targetLost", () => {
+          // Hedef kaybolunca model gizlenmesin, kalıcı olması için hiçbir şey yapma
         });
       });
     </script>
