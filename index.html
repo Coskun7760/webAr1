@@ -6,11 +6,12 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   </head>
   <body>
+    Selamün Aleyküm
     <!-- <a-scene mindar-image="imageTargetSrc: ./targets.mind; showStats: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"> -->
-    <a-scene mindar-image="imageTargetSrc: https://coskun7760.github.io/webAr1/targets.mind;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
     <a-assets>
      
-    <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/kup.gltf"></a-asset-item>
+    <a-asset-item id="avatarModel" src="https://farmmasi.com/webAr/muze-1.gltf"></a-asset-item>
      <!--  <a-asset-item id="avatarModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/softmind/scene.gltf"></a-asset-item> -->
     </a-assets>
 
@@ -23,9 +24,9 @@
         
       <!--  <a-gltf-model   position="0 0 0.3" scale="1 1 1" src="#avatarModel" > </a-gltf-model> -->
         
-        <a-gltf-model rotation="0 0 0 " position="0 -0.5 0.1" scale="1 1 1" src="#avatarModel"> </a-gltf-model>
- 
-<!-- <a-gltf-model position="0 0 0.1" scale="1 1 1" src="#avatarModel"></a-gltf-model> -->
+     <!--   <a-gltf-model rotation="0 0 0 " position="0 0 0.1" scale="0.005 0.005 0.005" src="#avatarModel" animation="property: position; to: 0 0.1 0.1; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"> </a-gltf-model>
+-->
+    <a-gltf-model position="0 0 0" scale="0.1 0.1 0.1" src="#avatarModel"></a-gltf-model>
       </a-entity>
     </a-scene>
   </body>
