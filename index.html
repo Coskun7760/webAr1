@@ -1,41 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8" />
+    <title>MindAR Kalıcı Model</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   </head>
   <body>
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-      
+    <a-scene
+      mindar-image="imageTargetSrc: ./targets.mind"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+      color-space="sRGB"
+      renderer="colorManagement: true, physicallyCorrectLights"
+      embedded
+    >
       <a-assets>
-        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
+        <a-asset-item id="model" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- Görünen modeli ekleyeceğimiz boş alan -->
-      <a-entity id="model-container"></a-entity>
+      <!-- Görsel hedef (sadece bir kez tetikler) -->
+      <a-entity mindar-image-target="targetIndex: 0" id="marker"></a-entity>
 
-      <!-- Target tanımı (sadece ilk algılamayı tetikler) -->
-      <a-entity mindar-image-target="targetIndex: 0" id="image-target"></a-entity>
+      <!-- Modelin ekleneceği alan -->
+      <a-entity id="model-holder"></a-entity>
     </a-scene>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const target = document.querySelector("#image-target");
-        const container = document.querySelector("#model-container");
+        const marker = document.querySelector("#marker");
+        const holder = document.querySelector("#model-holder");
 
-        target.addEventListener("targetFound", () => {
-          // Model daha önce eklendiyse tekrar ekleme
-          if (!document.querySelector("#permanent-model")) {
-            const model = document.createElement("a-gltf-model");
-            model.setAttribute("id", "permanent-model");
-            model.setAttribute("src", "#avatarModel");
-            model.setAttribute("position", "0 -0.1 -1.5"); // Kameranın önünde görünür
-            model.setAttribute("scale", "1 1 1");
-            container.appendChild(model);
-          }
+        marker.addEventListener("targetFound", () => {
+          // Daha önce eklendiyse yeniden ekleme
+          if (document.querySelector("#permanent-model")) return;
+
+          const model = document.createElement("a-gltf-model");
+          model.setAttribute("id", "permanent-model");
+          model.setAttribute("src", "#model");
+          model.setAttribute("scale", "1 1 1");
+          model.setAttribute("position", "0 -0.1 -1.5"); // Kameranın önünde görünmesi için
+          holder.appendChild(model);
         });
       });
     </script>
