@@ -7,57 +7,52 @@
   </head>
   <body>
     <a-scene mindar-image="imageTargetSrc: ./targets.mind;" 
-             embedded
              vr-mode-ui="enabled: false" 
-             device-orientation-permission-ui="enabled: false">
-      
+             device-orientation-permission-ui="enabled: false" 
+             embedded color-space="sRGB"
+             renderer="colorManagement: true, physicallyCorrectLights: true">
+
       <a-assets>
-        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
+        <a-asset-item id="model" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- Hedef -->
       <a-entity id="marker" mindar-image-target="targetIndex: 0">
-        <a-entity id="spawned-model" 
-                  gltf-model="#avatarModel" 
-                  position="0 -0.1 0.1" 
-                  scale="1 1 1" 
-                  visible="false">
-        </a-entity>
+        <a-gltf-model id="temp-model" src="#model" position="0 -0.1 0.1" scale="1 1 1" visible="true"></a-gltf-model>
       </a-entity>
     </a-scene>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const marker = document.querySelector("#marker");
-        const model = document.querySelector("#spawned-model");
+        const tempModel = document.querySelector("#temp-model");
+        let fixedModel = null;
 
         marker.addEventListener("targetFound", () => {
-          model.setAttribute("visible", true);
+          if (fixedModel) return; // Zaten sabitlendi
 
-          // Hedef kaybolsa da model yerinde kalsın
-          // 1 kez kopyalayıp marker'dan çıkartıyoruz
-          if (!document.querySelector("#fixed-model")) {
-            const clone = model.cloneNode();
-            clone.setAttribute("id", "fixed-model");
-            clone.setAttribute("visible", true);
+          // Modelin dünya konumunu ve rotasını al
+          const worldPos = new THREE.Vector3();
+          const worldQuat = new THREE.Quaternion();
+          tempModel.object3D.getWorldPosition(worldPos);
+          tempModel.object3D.getWorldQuaternion(worldQuat);
 
-            // Sahnedeki dünya pozisyonunu al
-            const worldPos = new THREE.Vector3();
-            const worldQuat = new THREE.Quaternion();
-            marker.object3D.getWorldPosition(worldPos);
-            marker.object3D.getWorldQuaternion(worldQuat);
+          // Yeni entity oluştur
+          fixedModel = document.createElement("a-gltf-model");
+          fixedModel.setAttribute("src", "#model");
+          fixedModel.setAttribute("position", worldPos);
+          fixedModel.setAttribute("scale", "1 1 1");
 
-            // Yeni boş entity oluştur ve pozisyonu ayarla
-            const newEntity = document.createElement("a-entity");
-            newEntity.setAttribute("position", worldPos);
-            newEntity.object3D.quaternion.copy(worldQuat);
-            newEntity.appendChild(clone);
+          // THREE.js üzerinden rotasyonu kopyala
+          fixedModel.addEventListener("model-loaded", () => {
+            fixedModel.object3D.quaternion.copy(worldQuat);
+          });
 
-            document.querySelector("a-scene").appendChild(newEntity);
-            model.setAttribute("visible", false); // marker üstündeki görünmesin
-          }
+          document.querySelector("a-scene").appendChild(fixedModel);
+
+          // Marker üzerindekini gizle
+          tempModel.setAttribute("visible", "false");
         });
       });
     </script>
