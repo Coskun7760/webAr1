@@ -1,32 +1,51 @@
 <!doctype html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   </head>
   <body>
-    
-     
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-    <a-assets>
-     
-    <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
-     
-    </a-assets>
-
-
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false"
+             embedded
+             renderer="colorManagement: true, physicallyCorrectLights"
+             >
+      
+      <a-assets>
+        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
+      </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-
-      <a-entity mindar-image-target="targetIndex: 0; persistent: true">
-        
-      
-    		<a-gltf-model position="0 -0.1 0.1" scale="1 1 1" src="#avatarModel"></a-gltf-model>
-		  
-		  
+      <a-entity id="target" mindar-image-target="targetIndex: 0">
+        <a-gltf-model id="myModel" src="#avatarModel" position="0 -0.1 0.1" scale="1 1 1" visible="false"></a-gltf-model>
       </a-entity>
+
+      <script>
+        AFRAME.registerComponent('keep-visible', {
+          init: function () {
+            const model = document.querySelector("#myModel");
+            const target = document.querySelector("#target");
+
+            target.addEventListener("targetFound", () => {
+              model.setAttribute("visible", true);
+            });
+
+            // Marker kaybolsa da modeli gizlemiyoruz
+            target.addEventListener("targetLost", () => {
+              // model.setAttribute("visible", false); // BUNU KALDIRIYORUZ
+            });
+          }
+        });
+
+        // Bu bileşeni hedefe ekle
+        document.addEventListener("DOMContentLoaded", () => {
+          document.querySelector("#target").setAttribute("keep-visible", "");
+        });
+      </script>
     </a-scene>
   </body>
 </html>
