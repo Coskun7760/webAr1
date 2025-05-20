@@ -14,26 +14,44 @@
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <!-- Takip edilen hedef -->
-      <a-entity mindar-image-target="targetIndex: 0" id="target">
-        <a-gltf-model id="model" position="0 -0.1 0.1" scale="1 1 1" src="#avatarModel" visible="false"></a-gltf-model>
-      </a-entity>
+      <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
+
+      <!-- Model sahneye eklendi ama başlangıçta görünmüyor -->
+      <a-gltf-model id="model" src="#avatarModel" visible="false" scale="1 1 1"></a-gltf-model>
     </a-scene>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const model = document.querySelector("#model");
         const target = document.querySelector("#target");
+        const model = document.querySelector("#model");
+
+        let modelPlaced = false;
 
         target.addEventListener("targetFound", () => {
-          // Modeli sadece bir kez görünür yap
-          if (!model.getAttribute("visible")) {
-            model.setAttribute("visible", true);
-          }
-        });
+          if (!modelPlaced) {
+            // Hedefin dünya pozisyonunu al
+            const targetWorldPos = new THREE.Vector3();
+            target.object3D.getWorldPosition(targetWorldPos);
 
-        // Hedef kaybolsa bile model görünür kalır
-        target.addEventListener("targetLost", () => {
-          // Buraya hiçbir şey yazmıyoruz ki model kaybolmasın
+            const targetWorldRot = new THREE.Euler();
+            target.object3D.getWorldRotation(targetWorldRot);
+
+            // Modeli sahneye bu pozisyona yerleştir
+            model.setAttribute("position", {
+              x: targetWorldPos.x,
+              y: targetWorldPos.y,
+              z: targetWorldPos.z
+            });
+
+            model.setAttribute("rotation", {
+              x: THREE.Math.radToDeg(targetWorldRot.x),
+              y: THREE.Math.radToDeg(targetWorldRot.y),
+              z: THREE.Math.radToDeg(targetWorldRot.z)
+            });
+
+            model.setAttribute("visible", true);
+            modelPlaced = true;
+          }
         });
       });
     </script>
