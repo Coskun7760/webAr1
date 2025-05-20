@@ -1,62 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="utf-8" />
-    <title>MindAR Kalıcı Model</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-    <style>
-      body, html {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        height: 100%;
-      }
-      a-scene {
-        width: 100%;
-        height: 100%;
-        position: fixed;
-        top: 0;
-        left: 0;
-      }
-    </style>
   </head>
   <body>
-    <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; autoStart: true"
-      embedded
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-    >
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       <a-assets>
-        <a-asset-item id="mymodel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
+        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0" id="mytarget"></a-entity>
-
-      <a-gltf-model
-        id="persistentModel"
-        src="#mymodel"
-        visible="true"
-        position="0 -0.1 0.1"
-        scale="1 1 1"
-      ></a-gltf-model>
-		
-		 <a-gltf-model position="0 -0.1 0.1" scale="1 1 1" src="#avatarModel"></a-gltf-model>
+      <!-- Takip edilen hedef -->
+      <a-entity mindar-image-target="targetIndex: 0" id="target">
+        <a-gltf-model id="model" position="0 -0.1 0.1" scale="1 1 1" src="#avatarModel" visible="false"></a-gltf-model>
+      </a-entity>
     </a-scene>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const target = document.querySelector("#mytarget");
-        const model = document.querySelector("#persistentModel");
+        const model = document.querySelector("#model");
+        const target = document.querySelector("#target");
 
         target.addEventListener("targetFound", () => {
-          model.setAttribute("visible", "true");
+          // Modeli sadece bir kez görünür yap
+          if (!model.getAttribute("visible")) {
+            model.setAttribute("visible", true);
+          }
+        });
+
+        // Hedef kaybolsa bile model görünür kalır
+        target.addEventListener("targetLost", () => {
+          // Buraya hiçbir şey yazmıyoruz ki model kaybolmasın
         });
       });
     </script>
