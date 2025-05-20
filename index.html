@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MindAR Sabit Model</title>
+    <title>MindAR Kalıcı Model</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -10,11 +10,9 @@
   <body>
     <a-scene
       mindar-image="imageTargetSrc: ./targets.mind;"
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
-      embedded
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
+      embedded
     >
       <a-assets>
         <a-asset-item
@@ -25,37 +23,33 @@
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity id="marker" mindar-image-target="targetIndex: 0">
-        <a-entity id="model-holder"></a-entity>
+      <a-entity mindar-image-target="targetIndex: 0" id="marker">
+        <a-gltf-model
+          id="my-model"
+          src="#model"
+          position="0 -0.1 0.1"
+          scale="0.5 0.5 0.5"
+          visible="false"
+        ></a-gltf-model>
       </a-entity>
     </a-scene>
 
     <script>
-      AFRAME.registerComponent("model-fixer", {
-        init: function () {
-          const scene = document.querySelector("a-scene");
-          const marker = document.querySelector("#marker");
-          const holder = document.querySelector("#model-holder");
-          let fixed = false;
+      document.addEventListener("DOMContentLoaded", () => {
+        const sceneEl = document.querySelector("a-scene");
+        const model = document.querySelector("#my-model");
+        const marker = document.querySelector("#marker");
 
-          marker.addEventListener("targetFound", () => {
-            if (fixed) return;
-            fixed = true;
+        marker.addEventListener("targetFound", () => {
+          // Görünür yap
+          model.setAttribute("visible", "true");
 
-            // Yeni model oluştur
-            const newModel = document.createElement("a-gltf-model");
-            newModel.setAttribute("src", "#model");
-            newModel.setAttribute("position", "0 -0.1 0.1");
-            newModel.setAttribute("scale", "1 1 1");
-
-            // Sahneye direkt ekle
-            scene.appendChild(newModel);
-          });
-        },
-      });
-
-      document.querySelector("a-scene").addEventListener("loaded", () => {
-        document.querySelector("#marker").setAttribute("model-fixer", "");
+          // Marker'dan ayır ve sahneye sabitle
+          setTimeout(() => {
+            sceneEl.appendChild(model);
+            model.object3D.position.set(0, 0, -1); // Kameranın önünde sabit pozisyon
+          }, 500);
+        });
       });
     </script>
   </body>
