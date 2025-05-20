@@ -1,13 +1,14 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
+    <title>Model Kalıcı Kalsın</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
       body { margin: 0; overflow: hidden; }
-      a-scene { position: absolute; width: 100%; height: 100%; }
+      a-scene { width: 100%; height: 100%; }
     </style>
   </head>
   <body>
@@ -16,52 +17,47 @@
       embedded
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
-      renderer="colorManagement: true, physicallyCorrectLights"
     >
 
       <a-assets>
-        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
+        <a-asset-item id="muzeModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- marker'ı dinleyen varlık -->
-      <a-entity id="marker" mindar-image-target="targetIndex: 0">
-        <!-- model sahneden ayrı, ama pozisyon kopyalanıyor -->
-      </a-entity>
+      <!-- Marker (takip için) -->
+      <a-entity id="marker" mindar-image-target="targetIndex: 0"></a-entity>
 
-      <!-- model sahneye sabit eklendi -->
+      <!-- Model dışarıda, sahneye kalıcı olarak eklenecek -->
       <a-entity id="modelContainer" visible="false">
-        <a-gltf-model id="myModel" src="#avatarModel" position="0 -0.1 -0.5" scale="1 1 1"></a-gltf-model>
+        <a-gltf-model src="#muzeModel" position="0 -0.1 0.1" scale="1 1 1"></a-gltf-model>
       </a-entity>
 
       <script>
-        AFRAME.registerComponent('persist-model', {
+        AFRAME.registerComponent('persistent-model', {
           init: function () {
             const marker = document.querySelector('#marker');
             const modelContainer = document.querySelector('#modelContainer');
-            const model = document.querySelector('#myModel');
+
+            let isPlaced = false;
 
             marker.addEventListener('targetFound', () => {
-              modelContainer.setAttribute('visible', true);
-
-              // Modelin pozisyonunu marker'dan al
-              const markerPos = marker.object3D.position;
-              const markerRot = marker.object3D.rotation;
-
-              modelContainer.object3D.position.copy(markerPos);
-              modelContainer.object3D.rotation.copy(markerRot);
+              if (!isPlaced) {
+                // Marker pozisyonunu al
+                const markerObj = marker.object3D;
+                modelContainer.object3D.position.copy(markerObj.position);
+                modelContainer.object3D.quaternion.copy(markerObj.quaternion);
+                modelContainer.setAttribute('visible', true);
+                isPlaced = true;
+              }
             });
-
-            // targetLost olduğunda hiçbir şey yapma
           }
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-          document.querySelector('a-scene').setAttribute('persist-model', '');
+          document.querySelector('a-scene').setAttribute('persistent-model', '');
         });
       </script>
-
     </a-scene>
   </body>
 </html>
