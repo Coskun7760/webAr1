@@ -1,15 +1,17 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8">
+    <title>MindAR Sabit Model</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   </head>
-  <body>
-    <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind;"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
+  <body style="margin: 0; overflow: hidden">
+    <a-scene 
+      mindar-image="imageTargetSrc: ./targets.mind;" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false" 
       embedded
     >
       <a-assets>
@@ -18,41 +20,37 @@
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- Bu alan sadece hedefi dinleyecek -->
-      <a-entity id="target" mindar-image-target="targetIndex: 0">
-      </a-entity>
+      <!-- Gizli target, sadece event tetiklemek için -->
+      <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
 
-      <!-- Modelimiz başlangıçta gizli -->
-      <a-gltf-model
-        id="myModel"
-        position="0 -0.1 0.1"
-        scale="1 1 1"
-        visible="false"
-        src="#avatarModel"
-      ></a-gltf-model>
+      <!-- Model: Başta gizli, sonra sahneye eklenecek -->
+      <a-entity id="model-container" visible="false">
+        <a-gltf-model id="myModel" position="0 -0.1 0.1" scale="1 1 1" src="#avatarModel"></a-gltf-model>
+      </a-entity>
     </a-scene>
 
     <script>
-      AFRAME.registerComponent('target-listener', {
+      AFRAME.registerComponent('target-handler', {
         init: function () {
           const target = document.querySelector('#target');
-          const model = document.querySelector('#myModel');
+          const modelContainer = document.querySelector('#model-container');
 
           target.addEventListener('targetFound', () => {
-            model.setAttribute('visible', 'true');
+            // Hedef bulunduğunda modeli görünür yap
+            modelContainer.setAttribute('visible', 'true');
+
+            // Modeli sahneden bağımsız hale getir
+            const scene = document.querySelector('a-scene');
+            scene.appendChild(modelContainer); // böylece hedef kaybolsa bile sahnede kalır
           });
 
-          // Bu satırı yorum satırı yaparsan model kaybolmaz
-          /*
-          target.addEventListener('targetLost', () => {
-            model.setAttribute('visible', 'false');
-          });
-          */
+          // Hedef kaybolunca bir şey yapma = model ekranda kalır
         }
       });
 
-      document.querySelector('a-scene').addEventListener('loaded', () => {
-        document.querySelector('#target').setAttribute('target-listener', '');
+      // Komponenti hedefe bağla
+      document.addEventListener("DOMContentLoaded", () => {
+        document.querySelector('#target').setAttribute('target-handler', '');
       });
     </script>
   </body>
