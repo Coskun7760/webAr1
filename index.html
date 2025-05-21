@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>MindAR Animasyon</title>
+    <title>MindAR Animasyon Test</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -12,51 +12,47 @@
       mindar-image="imageTargetSrc: ./targets.mind;"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
-      loading-screen="enabled: false"
       renderer="colorManagement: true, physicallyCorrectLights"
       embedded
     >
       <a-assets>
+        <!-- Don McCurdy'nin dans eden robotu -->
         <a-asset-item
-          id="animatedModel"
-          src="https://coskun7760.github.io/webAr1/muze-12.gltf"
+          id="robot"
+          src="https://cdn.glitch.global/5271aa1f-201f-4ec8-8f0b-6a457d84fb01/RobotExpressive.glb?v=1689016590428"
         ></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0" id="marker">
+      <a-entity mindar-image-target="targetIndex: 0">
         <a-gltf-model
-          id="myModel"
-          src="#animatedModel"
+          id="animatedModel"
+          src="#robot"
           position="0 -0.1 0"
-          scale="1 1 1"
+          scale="0.01 0.01 0.01"
+          play-animation
         ></a-gltf-model>
       </a-entity>
     </a-scene>
 
     <script>
-      AFRAME.registerComponent("play-gltf-animation", {
+      AFRAME.registerComponent("play-animation", {
         init: function () {
           this.el.addEventListener("model-loaded", () => {
-            const model = this.el.getObject3D("mesh");
-            const mixer = new THREE.AnimationMixer(model);
-            const clips = this.el.getObject3D("mesh").animations;
-            clips.forEach((clip) => {
+            const mesh = this.el.getObject3D("mesh");
+            const mixer = new THREE.AnimationMixer(mesh);
+            this.mixer = mixer;
+
+            mesh.animations.forEach((clip) => {
               mixer.clipAction(clip).play();
             });
-
-            this.mixer = mixer;
           });
         },
-        tick: function (time, deltaTime) {
-          if (this.mixer) this.mixer.update(deltaTime / 1000);
+        tick: function (t, dt) {
+          if (this.mixer) this.mixer.update(dt / 1000);
         },
       });
-
-      document
-        .querySelector("#myModel")
-        .setAttribute("play-gltf-animation", "");
     </script>
   </body>
 </html>
