@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Model Kalıcı Kalsın</title>
+    <title>Kalıcı Model</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -33,20 +33,23 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const target = document.querySelector("#target");
         const model = document.querySelector("#myModel");
+        const target = document.querySelector("#target");
 
+        let modelLoaded = false;
         let modelShown = false;
 
+        // Model tamamen yüklendiğinde tetiklenir
+        model.addEventListener("model-loaded", () => {
+          modelLoaded = true;
+        });
+
         target.addEventListener("targetFound", () => {
-          if (!modelShown) {
+          if (modelLoaded && !modelShown) {
             model.setAttribute("visible", true);
             modelShown = true;
           }
         });
-
-        // Marker kaybolduğunda model görünürlüğünü değiştirmiyoruz!
-        // Böylece bir kez görüldükten sonra hep sahnede kalıyor.
       });
     </script>
   </body>
