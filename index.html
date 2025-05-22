@@ -10,38 +10,37 @@
     <a-scene mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
-        <audio id="modelSound" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto"></audio>
+        <audio id="modelSound" src="https://coskun7760.github.io/webAr1/SoundHelix-Song-1.mp3" preload="auto"></audio>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity id="myTarget" mindar-image-target="targetIndex: 0">
+      <a-entity id="myTargetEntity" mindar-image-target="targetIndex: 0">
         <a-gltf-model
-          id="animatedModel"
-          position="0 -0.5 0.1"
+          id="animatedModel" position="0 -0.5 0.1"
           scale="0.5 0.5 0.5"
           src="#avatarModel"
-          animation-mixer="clip: mixamo.com; repeat: Infinity; timeScale: 0.8"
+          animation-mixer="repeat: Infinity; timeScale: 10"
           sound="src: #modelSound; loop: true; volume: 0.5; autoplay: false" ></a-gltf-model>
       </a-entity>
     </a-scene>
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        const myTarget = document.getElementById('myTarget');
+        const myTargetEntity = document.getElementById('myTargetEntity');
         const animatedModel = document.getElementById('animatedModel');
 
-        // Hedef algılandığında
-        myTarget.addEventListener('targetFound', () => {
-          console.log('Target found! Playing sound...');
+        // Hedef algılandığında sesi başlat
+        myTargetEntity.addEventListener('targetFound', () => {
+          console.log('AR Hedefi algılandı! Ses çalıyor...');
           if (animatedModel && animatedModel.components.sound) {
             animatedModel.components.sound.playSound();
           }
         });
 
-        // Hedef kaybedildiğinde (isteğe bağlı, sesi durdurmak isterseniz)
-        myTarget.addEventListener('targetLost', () => {
-          console.log('Target lost! Stopping sound...');
+        // Hedef kaybedildiğinde sesi durdur (isteğe bağlı)
+        myTargetEntity.addEventListener('targetLost', () => {
+          console.log('AR Hedefi kaybedildi! Ses durduruldu...');
           if (animatedModel && animatedModel.components.sound) {
             animatedModel.components.sound.pauseSound(); // veya stopSound()
           }
