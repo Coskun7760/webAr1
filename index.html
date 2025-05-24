@@ -16,13 +16,15 @@
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity id="myTargetEntity" mindar-image-target="targetIndex: 0">
-        <a-gltf-model
-          id="animatedModel"
-          position="0 -0.5 0.1"
-          scale="0.5 0.5 0.5"
-          src="#avatarModel"
-          animation-mixer="timeScale: 10" sound="src: #modelSound;  volume: 1; autoplay: true" 
-        ></a-gltf-model>
+       <a-gltf-model
+		  id="animatedModel"
+		  position="0 -0.5 0.1"
+		  scale="0.5 0.5 0.5"
+		  src="#avatarModel"
+		  animation-mixer="loop: true; timeScale: 10"
+		  sound="src: #modelSound; volume: 1; autoplay: false; panner: false" 
+		>
+		  </a-gltf-model>
       </a-entity>
     </a-scene>
 
