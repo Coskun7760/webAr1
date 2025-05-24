@@ -21,8 +21,7 @@
           position="0 -0.5 0.1"
           scale="0.5 0.5 0.5"
           src="#avatarModel"
-          animation-mixer="repeat: Infinity; timeScale: 10"
-          sound="src: #modelSound; loop: true; volume: 0.5; autoplay: false"
+          animation-mixer="loop: true; timeScale: 10" sound="src: #modelSound; loop: true; volume: 0.5; autoplay: false"
         ></a-gltf-model>
       </a-entity>
     </a-scene>
@@ -31,38 +30,32 @@
       document.addEventListener('DOMContentLoaded', () => {
         const myTargetEntity = document.getElementById('myTargetEntity');
         const animatedModel = document.getElementById('animatedModel');
-        const modelSoundAsset = document.getElementById('modelSound'); // Ses varlığına erişim
+        const modelSoundAsset = document.getElementById('modelSound');
 
-        // Sesin yüklenip yüklenmediğini takip etmek için bir değişken
         let isSoundLoaded = false;
 
-        // Ses varlığı yüklendiğinde
         modelSoundAsset.addEventListener('loadeddata', () => {
           console.log('Ses dosyası tamamen yüklendi!');
           isSoundLoaded = true;
         });
 
-        // Hedef algılandığında
         myTargetEntity.addEventListener('targetFound', () => {
           console.log('AR Hedefi algılandı! Ses çalıyor...');
           if (animatedModel && animatedModel.components.sound) {
-            // Sesin yüklenmesini bekle, sonra çal
             if (isSoundLoaded) {
               animatedModel.components.sound.playSound();
             } else {
-              // Henüz yüklenmediyse, yüklendikten sonra çalması için bir kez daha deneyebiliriz
-              // veya zaten A-Frame bunu halledecektir.
-              // Bu uyarıyı görüyorsanız, A-Frame zaten yüklenince oynatacak.
               console.warn('Ses henüz yüklenmedi, yüklendikten sonra oynatılacak.');
+              // A-Frame zaten otomatik olarak yüklenince çalacaktır,
+              // bu kısım sadece bilgilendirme amaçlıdır.
             }
           }
         });
 
-        // Hedef kaybedildiğinde (isteğe bağlı)
         myTargetEntity.addEventListener('targetLost', () => {
           console.log('AR Hedefi kaybedildi! Ses durduruldu...');
           if (animatedModel && animatedModel.components.sound) {
-            animatedModel.components.sound.pauseSound(); // Sesi duraklat
+            animatedModel.components.sound.pauseSound();
           }
         });
       });
