@@ -12,38 +12,57 @@
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
       </a-assets>
- 
+
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity id="myTargetEntity" mindar-image-target="targetIndex: 0">
         <a-gltf-model
-          id="animatedModel" position="0 -0.5 0.1"
+          id="animatedModel"
+          position="0 -0.5 0.1"
           scale="0.5 0.5 0.5"
           src="#avatarModel"
-          animation-mixer="timeScale: 10"
-          sound="src: #modelSound; loop: true; volume: 0.5; autoplay: false" ></a-gltf-model>
+          animation-mixer="repeat: Infinity; timeScale: 10"
+          sound="src: #modelSound; loop: true; volume: 0.5; autoplay: false"
+        ></a-gltf-model>
       </a-entity>
-		
     </a-scene>
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         const myTargetEntity = document.getElementById('myTargetEntity');
         const animatedModel = document.getElementById('animatedModel');
+        const modelSoundAsset = document.getElementById('modelSound'); // Ses varlığına erişim
 
-        // Hedef algılandığında sesi başlat
+        // Sesin yüklenip yüklenmediğini takip etmek için bir değişken
+        let isSoundLoaded = false;
+
+        // Ses varlığı yüklendiğinde
+        modelSoundAsset.addEventListener('loadeddata', () => {
+          console.log('Ses dosyası tamamen yüklendi!');
+          isSoundLoaded = true;
+        });
+
+        // Hedef algılandığında
         myTargetEntity.addEventListener('targetFound', () => {
           console.log('AR Hedefi algılandı! Ses çalıyor...');
           if (animatedModel && animatedModel.components.sound) {
-            animatedModel.components.sound.playSound();
+            // Sesin yüklenmesini bekle, sonra çal
+            if (isSoundLoaded) {
+              animatedModel.components.sound.playSound();
+            } else {
+              // Henüz yüklenmediyse, yüklendikten sonra çalması için bir kez daha deneyebiliriz
+              // veya zaten A-Frame bunu halledecektir.
+              // Bu uyarıyı görüyorsanız, A-Frame zaten yüklenince oynatacak.
+              console.warn('Ses henüz yüklenmedi, yüklendikten sonra oynatılacak.');
+            }
           }
         });
 
-        // Hedef kaybedildiğinde sesi durdur (isteğe bağlı)
+        // Hedef kaybedildiğinde (isteğe bağlı)
         myTargetEntity.addEventListener('targetLost', () => {
           console.log('AR Hedefi kaybedildi! Ses durduruldu...');
           if (animatedModel && animatedModel.components.sound) {
-            animatedModel.components.sound.pauseSound(); // veya stopSound()
+            animatedModel.components.sound.pauseSound(); // Sesi duraklat
           }
         });
       });
