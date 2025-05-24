@@ -41,9 +41,10 @@
         });
 
         myTargetEntity.addEventListener('targetFound', () => {
-          console.log('AR Hedefi algılandı! Ses çalıyor...');
+         
           if (animatedModel && animatedModel.components.sound) {
             if (isSoundLoaded) {
+				 console.log('AR Hedefi algılandı! Ses çalıyor...');
               animatedModel.components.sound.playSound();
             } else {
               console.warn('Ses henüz yüklenmedi, yüklendikten sonra oynatılacak.');
@@ -54,8 +55,9 @@
         });
 
         myTargetEntity.addEventListener('targetLost', () => {
-          console.log('AR Hedefi kaybedildi! Ses durduruldu...');
+         
           if (animatedModel && animatedModel.components.sound) {
+			   console.log('AR Hedefi kaybedildi! Ses durduruldu...');
             animatedModel.components.sound.pauseSound();
           }
         });
