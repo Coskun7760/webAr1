@@ -21,20 +21,18 @@
           position="0 -0.5 0.1"
           scale="0.5 0.5 0.5"
           src="#avatarModel"
-          animation-mixer="timeScale: 10"
-          
+          animation-mixer="loop: true; timeScale: 10"
         ></a-gltf-model>
-		  
-		   <a-entity sound="src: #modelSound; volume: 1; autoplay: true; loop: true"></a-entity>
-
+        <a-entity id="soundController" sound="src: #modelSound; volume: 1; autoplay: false; loop: true"></a-entity>
       </a-entity>
     </a-scene>
 
     <script>
-     /* document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener('DOMContentLoaded', () => {
         const myTargetEntity = document.getElementById('myTargetEntity');
         const animatedModel = document.getElementById('animatedModel');
         const modelSoundAsset = document.getElementById('modelSound');
+        const soundController = document.getElementById('soundController'); // Yeni ses kontrol entity'si
 
         let isSoundLoaded = false;
 
@@ -45,13 +43,13 @@
 
         myTargetEntity.addEventListener('targetFound', () => {
           console.log('AR Hedefi algılandı! Ses çalıyor...');
-          if (animatedModel && animatedModel.components.sound) {
+          if (soundController && soundController.components.sound) {
             if (isSoundLoaded) {
               try {
-                animatedModel.components.sound.playSound();
-                console.log('playSound() başarıyla çağrıldı.'); // Başarı mesajı
+                soundController.components.sound.playSound(); // soundController üzerinden sesi çal
+                console.log('playSound() başarıyla çağrıldı.');
               } catch (error) {
-                console.error('playSound() çağrılırken hata oluştu:', error); // Hata yakalama
+                console.error('playSound() çağrılırken hata oluştu:', error);
               }
             } else {
               console.warn('Ses henüz yüklenmedi, yüklendikten sonra oynatılacak.');
@@ -61,11 +59,11 @@
 
         myTargetEntity.addEventListener('targetLost', () => {
           console.log('AR Hedefi kaybedildi! Ses durduruldu...');
-          if (animatedModel && animatedModel.components.sound) {
-            animatedModel.components.sound.pauseSound();
+          if (soundController && soundController.components.sound) {
+            soundController.components.sound.pauseSound(); // soundController üzerinden sesi durdur
           }
         });
-      }); */
+      });
     </script>
   </body>
 </html>
