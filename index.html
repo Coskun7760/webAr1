@@ -5,9 +5,54 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+
+    <script>
+      // Howler.js ses nesnesini global olarak bir kez tanımla
+      var backgroundMusic = new Howl({
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'], // Senin ses dosyan
+        loop: true, // Müziğin döngüde çalmasını sağlar
+        volume: 0.7, // Ses seviyesini ayarla (0.0 ile 1.0 arasında)
+        autoplay: false // Otomatik başlamasın, biz kontrol edelim
+      });
+
+      AFRAME.registerComponent("mytarget", {
+        init: function () {
+          const el = this.el; // Hedef entity'yi (mytarget) temsil eder
+
+          el.addEventListener("targetFound", (event) => {
+            console.log("AR Hedefi algılandı! Model görünür olmalı.");
+
+            // Howler.js sesini başlat
+            if (backgroundMusic && !backgroundMusic.playing()) {
+                backgroundMusic.play();
+                console.log("Howler.js sesi oynatılıyor.");
+            } else if (backgroundMusic && backgroundMusic.playing()) {
+                console.log("Howler.js sesi zaten çalıyor.");
+            } else {
+                console.warn("Howler.js sesi başlatılamadı.");
+            }
+          });
+
+          el.addEventListener("targetLost", (event) => {
+            console.log("AR Hedefi kaybedildi! Model gizleniyor.");
+
+            // Howler.js sesini durdur
+            if (backgroundMusic && backgroundMusic.playing()) {
+                backgroundMusic.pause();
+                console.log("Howler.js sesi durduruldu.");
+            }
+          });
+        },
+      });
+    </script>
   </head>
   <body>
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001" vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
@@ -15,7 +60,7 @@
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity id="myTargetEntity" mindar-image-target="targetIndex: 0">
+      <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
         <a-gltf-model
           id="animatedModel"
           position="0 -0.5 0.1"
@@ -23,47 +68,7 @@
           src="#avatarModel"
           animation-mixer="loop: true; timeScale: 10"
         ></a-gltf-model>
-      
       </a-entity>
     </a-scene>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const myTargetEntity = document.getElementById('myTargetEntity');
-        const animatedModel = document.getElementById('animatedModel');
-        const modelSoundAsset = document.getElementById('modelSound');
-        const soundController = document.getElementById('soundController'); // Yeni ses kontrol entity'si
-
-        let isSoundLoaded = false;
-
-        modelSoundAsset.addEventListener('loadeddata', () => {
-          console.log('Ses dosyası tamamen yüklendi!');
-          isSoundLoaded = true;
-        });
-
-        myTargetEntity.addEventListener('targetFound', () => {
-          console.log('AR Hedefi algılandı! Ses çalıyor...');
-          if (soundController && soundController.components.sound) {
-            if (isSoundLoaded) {
-              try {
-                soundController.components.sound.playSound(); // soundController üzerinden sesi çal
-                console.log('playSound() başarıyla çağrıldı.');
-              } catch (error) {
-                console.error('playSound() çağrılırken hata oluştu:', error);
-              }
-            } else {
-              console.warn('Ses henüz yüklenmedi, yüklendikten sonra oynatılacak.');
-            }
-          }
-        });
-
-        myTargetEntity.addEventListener('targetLost', () => {
-          console.log('AR Hedefi kaybedildi! Ses durduruldu...');
-          if (soundController && soundController.components.sound) {
-            soundController.components.sound.pauseSound(); // soundController üzerinden sesi durdur
-          }
-        });
-      });
-    </script>
   </body>
 </html>
