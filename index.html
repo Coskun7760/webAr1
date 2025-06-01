@@ -46,6 +46,69 @@
           });
         },
       });
+		
+		
+		AFRAME.registerComponent('custom-animation-manager', {
+  init: function () {
+    this.mixer = null;
+    this.actions = {};
+    this.clipsLoaded = false;
+
+    this.el.addEventListener('model-loaded', () => {
+      const model = this.el.getObject3D('mesh');
+      if (!model) { return; }
+
+      this.mixer = new THREE.AnimationMixer(model);
+      const clips = model.animations;
+
+      if (clips && clips.length > 0) {
+        clips.forEach(clip => {
+          // Animasyon isimlerini kontrol et ve istediğin klipleri al
+          if (clip.name === 'hareket' || clip.name === 'hareket2') {
+            const action = this.mixer.clipAction(clip);
+            action.loop = THREE.LoopRepeat; // Döngü ayarı
+            action.timeScale = 1; // Hız ayarı
+            this.actions[clip.name] = action;
+          }
+        });
+        this.clipsLoaded = true;
+      }
+
+      // THREE.js update döngüsüne mixer'ı ekle
+      this.el.sceneEl.addEventListener('tick', (evt) => {
+        if (this.mixer) {
+          this.mixer.update(evt.detail.deltaTime);
+        }
+      });
+    });
+
+    this.el.sceneEl.addEventListener('targetFound', () => {
+      if (this.clipsLoaded) {
+        // İki animasyonu aynı anda başlat
+        if (this.actions['hareket']) {
+          this.actions['hareket'].play();
+        }
+        if (this.actions['hareket2']) {
+          this.actions['hareket2'].play();
+        }
+        console.log("Custom animasyonlar başlatıldı.");
+      }
+    });
+
+    this.el.sceneEl.addEventListener('targetLost', () => {
+      if (this.clipsLoaded) {
+        // İki animasyonu duraklat
+        if (this.actions['hareket']) {
+          this.actions['hareket'].stop(); // Stop yerine pause de kullanılabilir
+        }
+        if (this.actions['hareket2']) {
+          this.actions['hareket2'].stop(); // Stop yerine pause de kullanılabilir
+        }
+        console.log("Custom animasyonlar durduruldu.");
+      }
+    });
+  },
+});
     </script>
   </head>
   <body>
@@ -62,12 +125,11 @@
 
       <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
         <a-gltf-model
-          id="animatedModel"
-          position="0 -0.5 0.1"
-          scale="0.5 0.5 0.5"
-          src="#avatarModel"
-          animation-mixer="clip: hareket*; loop: true; timeScale: 10"
-        ></a-gltf-model>
+			  id="animatedModel"
+			  position="0 -0.5 0.1"
+			  scale="0.5 0.5 0.5"
+			  src="#avatarModel"
+			  custom-animation-manager ></a-gltf-model>
       </a-entity>
     </a-scene>
   </body>
