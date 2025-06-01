@@ -99,10 +99,10 @@
       if (this.clipsLoaded) {
         // İki animasyonu duraklat
         if (this.actions['hareket']) {
-          this.actions['hareket'].stop(); // Stop yerine pause de kullanılabilir
+          this.actions['hareket'].pause(); // Stop yerine pause de kullanılabilir
         }
         if (this.actions['hareket2']) {
-          this.actions['hareket2'].stop(); // Stop yerine pause de kullanılabilir
+          this.actions['hareket2'].pause(); // Stop yerine pause de kullanılabilir
         }
         console.log("Custom animasyonlar durduruldu.");
       }
