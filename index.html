@@ -37,7 +37,6 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        /* Video'nun z-index'ini ayarlamak gerekebilir, ancak MindAR bunu genelde kendi yönetir. */
       }
     </style>
 
@@ -74,7 +73,7 @@
         },
       });
 
-      // Fotoğraf çekme fonksiyonu - A-Frame'in kendi screenshot bileşenini kullanıyoruz
+      // *** Fotoğraf çekme fonksiyonu - EN GÜVENİLİR YAKLAŞIM ***
       async function takeScreenshot() {
         console.log("AR fotoğrafı çekiliyor...");
 
@@ -85,30 +84,54 @@
           return;
         }
 
-        // A-Frame'in screenshot bileşenini çağır
-        // 'width' ve 'height' opsiyoneldir, belirlenmezse varsayılan olarak canvas boyutları kullanılır.
-        // 'encoder' opsiyoneldir, 'image/png' veya 'image/jpeg' olabilir.
+        const videoElement = document.querySelector('video');
+        if (!videoElement || videoElement.readyState < 2) {
+          console.error("Kamera video elementi bulunamadı veya hazır değil.");
+          alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
+          return;
+        }
+
+        const arCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
+        if (!arCanvas) {
+          console.error("A-Frame render canvas'ı bulunamadı.");
+          alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
+          return;
+        }
+
         try {
-          const screenshotDataURL = await sceneEl.components.screenshot.capture('dataURL');
-          // capture metodu doğrudan dataURL döndürür, bu yüzden toDataURL tekrar çağırmaya gerek yok.
+          // Video elementinin anlık görüntüsünü ImageBitmap olarak al
+          // Bu, cross-origin kısıtlamalarını aşar.
+          const videoImageBitmap = await createImageBitmap(videoElement);
 
-          if (!screenshotDataURL) {
-            console.error("Ekran görüntüsü boş döndü. Kamera akışı veya model render hatası olabilir.");
-            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Kamera akışının aktif olduğundan emin olun.");
-            return;
-          }
+          // Yeni bir canvas oluşturup üzerine önce video görüntüsünü, sonra AR içeriğini çiz
+          const combinedCanvas = document.createElement('canvas');
+          combinedCanvas.width = videoImageBitmap.width;
+          combinedCanvas.height = videoImageBitmap.height;
+          const ctx = combinedCanvas.getContext('2d');
 
+          // Video görüntüsünü çiz
+          ctx.drawImage(videoImageBitmap, 0, 0, combinedCanvas.width, combinedCanvas.height);
+
+          // AR içeriğini video görüntüsünün üzerine çiz
+          // Not: preserveDrawingBuffer: true ayarı hala önemlidir.
+          ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
+
+          // Birleşik canvas'tan veri URL'sini al
+          const screenshotDataURL = combinedCanvas.toDataURL('image/png');
+
+          // İndirme linkini oluştur ve tıkla
           const link = document.createElement('a');
           link.href = screenshotDataURL;
           link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+
           console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
 
         } catch (error) {
-          console.error("A-Frame screenshot alınırken hata oluştu:", error);
-          alert("Fotoğraf çekilemedi. Tarayıcı izinlerini kontrol edin veya sayfa tamamen yüklenene kadar bekleyin. (Hata detayı: " + error.message + ")");
+          console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
+          alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
         }
       }
     </script>
@@ -118,8 +141,7 @@
       mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
-      webgl-renderer="preserveDrawingBuffer: true;" 
-      screenshot="width: 1920; height: 1080;" >
+      webgl-renderer="preserveDrawingBuffer: true;" screenshot="" >
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
@@ -138,7 +160,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
 
   </body>
 </html>
