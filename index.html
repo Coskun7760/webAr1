@@ -78,17 +78,23 @@
           return;
         }
 
-        // Sahnenin renderer'ını kullanarak görüntüyü al
-        // MindAR-AFrame, canvas'ı otomatik olarak yönettiği için doğrudan renderer'dan çekebiliriz.
-        // Bazı durumlarda sceneEl.components.renderer.renderer.domElement.toDataURL() da kullanılabilir.
+        const cameraEl = sceneEl.querySelector('a-camera');
+        if (!cameraEl) {
+          console.error("A-Frame kamerası bulunamadı.");
+          return;
+        }
+        const camera = cameraEl.components.camera.camera; // THREE.js kamera objesine erişim
+
         const renderer = sceneEl.renderer;
         if (!renderer) {
           console.error("A-Frame renderer bulunamadı.");
           return;
         }
         
-        // Geçici olarak kameranın bulunduğu görünümü render et
-        renderer.render(sceneEl.object3D, sceneEl.camera.components.camera.camera);
+        // Render etmeden önce sahnenin güncel state'ini yakala
+        renderer.render(sceneEl.object3D, camera); // Doğrudan THREE.js kamera objesini kullan
+
+        // Canvas'ı al ve Data URL'e dönüştür
         const screenshotDataURL = renderer.domElement.toDataURL('image/png');
 
         // Görüntüyü indirmek için bir link oluştur
