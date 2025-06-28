@@ -7,8 +7,6 @@
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-
     <style>
       /* Butonu AR sahnesinin üzerinde konumlandırmak için stil */
       .capture-button {
@@ -30,9 +28,6 @@
       .capture-button:hover {
         background-color: #45a049;
       }
-      /* MindAR'ın video elemanının stilini kontrol et (gerekirse) */
-      /* MindAR genellikle videoyu arka planda tam ekran yapar. */
-      /* Eğer video elementi ile ilgili bir sorun olursa burayı inceleyebiliriz. */
     </style>
 
     <script>
@@ -68,37 +63,40 @@
         },
       });
 
-      // Fotoğraf çekme fonksiyonu html2canvas ile güncellendi
-      async function takeScreenshot() {
+      // Fotoğraf çekme fonksiyonu - Doğrudan A-Frame / MindAR canvas'ı hedefliyoruz
+      function takeScreenshot() {
         console.log("Ekran görüntüsü alınıyor...");
-        // Tüm body elementini yakalamak, MindAR'ın video akışını da içerir.
-        // Eğer belirli bir alanı yakalamak istersen, o elementin ID'sini verebilirsin.
-        const bodyElement = document.body; 
+        const sceneEl = document.querySelector('a-scene');
+
+        if (!sceneEl) {
+          console.error("A-Frame sahnesi bulunamadı.");
+          return;
+        }
+
+        // A-Frame sahnesinin renderer'ının domElement'ı genellikle ana canvas'tır.
+        // Bu, hem kamera görüntüsünü hem de 3D içeriği içermelidir (MindAR bunu birleştiriyorsa).
+        const mainCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
+
+        if (!mainCanvas) {
+          console.error("Ana render canvas'ı bulunamadı.");
+          alert("Fotoğraf çekilemedi: Render canvas'ı bulunamadı.");
+          return;
+        }
 
         try {
-          const canvas = await html2canvas(bodyElement, {
-            useCORS: true, // Eğer cross-origin kaynaklar varsa bunu aç
-            allowTaint: true, // Kirli canvas'a izin ver (güvenlik açığı oluşturabilir, ama video için gerekli olabilir)
-            backgroundColor: null, // Şeffaf arka planı koru
-            // Eğer MindAR'ın video elementi tam olarak yakalanmazsa,
-            // aşağıdaki hidden: true seçeneğini false yapmayı deneyebilirsin,
-            // ancak genellikle varsayılan ayarlar çoğu durumda yeterlidir.
-            // hidden: false 
-          });
-
-          const screenshotDataURL = canvas.toDataURL('image/png');
+          const screenshotDataURL = mainCanvas.toDataURL('image/png');
 
           const link = document.createElement('a');
           link.href = screenshotDataURL;
-          link.download = 'MindAR_AR_Goruntusu_' + new Date().getTime() + '.png';
+          link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          console.log("AR ekran görüntüsü alındı ve indirildi.");
+          console.log("AR fotoğrafı alındı ve indirildi.");
 
         } catch (error) {
-          console.error("Ekran görüntüsü alınırken hata oluştu:", error);
-          alert("Fotoğraf çekilemedi. Tarayıcı izinlerini kontrol edin veya sayfa tamamen yüklenene kadar bekleyin.");
+          console.error("Fotoğraf çekilirken hata oluştu:", error);
+          alert("Fotoğraf çekilemedi. Tarayıcı izinlerini kontrol edin veya sayfa tamamen yüklenene kadar bekleyin. (Hata detayı: " + error.message + ")");
         }
       }
     </script>
@@ -126,7 +124,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çekkk</button>
 
   </body>
 </html>
