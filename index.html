@@ -37,6 +37,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+        /* Video'nun z-index'ini ayarlamak gerekebilir, ancak MindAR bunu genelde kendi yönetir. */
       }
     </style>
 
@@ -73,7 +74,7 @@
         },
       });
 
-      // Fotoğraf çekme fonksiyonu - Video akışını ve 3D içeriği birleştiriyoruz
+      // Fotoğraf çekme fonksiyonu - A-Frame'in kendi screenshot bileşenini kullanıyoruz
       async function takeScreenshot() {
         console.log("AR fotoğrafı çekiliyor...");
 
@@ -84,50 +85,19 @@
           return;
         }
 
-        // 1. MindAR'ın kamera video elementini bul
-        const videoElement = document.querySelector('video'); 
-        if (!videoElement || videoElement.readyState < 2) { // Video hazır mı kontrolü
-          console.error("Kamera video elementi bulunamadı veya hazır değil.");
-          alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
-          return;
-        }
-
-        // 2. A-Frame'in 3D içeriği çizdiği canvas'ı al
-        const arCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
-        if (!arCanvas) {
-          console.error("A-Frame render canvas'ı bulunamadı.");
-          alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
-          return;
-        }
-
-        // 3. Geçici bir canvas oluştur
-        const combinedCanvas = document.createElement('canvas');
-        // Canvas boyutlarını, videonun gerçek boyutlarına veya pencere boyutuna ayarla
-        combinedCanvas.width = videoElement.videoWidth || window.innerWidth;
-        combinedCanvas.height = videoElement.videoHeight || window.innerHeight;
-        
-        // Eğer video boyutu sıfır geliyorsa, ekran boyutunu kullan (fallback)
-        if (combinedCanvas.width === 0 || combinedCanvas.height === 0) {
-            combinedCanvas.width = window.innerWidth;
-            combinedCanvas.height = window.innerHeight;
-            console.warn("Video boyutu sıfır. Ekran boyutları kullanılıyor.");
-        }
-
-        const ctx = combinedCanvas.getContext('2d');
-
+        // A-Frame'in screenshot bileşenini çağır
+        // 'width' ve 'height' opsiyoneldir, belirlenmezse varsayılan olarak canvas boyutları kullanılır.
+        // 'encoder' opsiyoneldir, 'image/png' veya 'image/jpeg' olabilir.
         try {
-          // 4. Video akışını geçici canvas'a çiz
-          // `crossOrigin` hatasını önlemek için `videoElement`'in kendisini çekiyoruz.
-          ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          const screenshotDataURL = await sceneEl.components.screenshot.capture('dataURL');
+          // capture metodu doğrudan dataURL döndürür, bu yüzden toDataURL tekrar çağırmaya gerek yok.
 
-          // 5. 3D modeli içeren AR canvas'ını video üzerine çiz
-          // Bu adımda 3D modelin doğru şekilde çizilmesi için 'preserveDrawingBuffer' gerekli.
-          ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          if (!screenshotDataURL) {
+            console.error("Ekran görüntüsü boş döndü. Kamera akışı veya model render hatası olabilir.");
+            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Kamera akışının aktif olduğundan emin olun.");
+            return;
+          }
 
-          // 6. Birleşik canvas'tan görüntüyü al
-          const screenshotDataURL = combinedCanvas.toDataURL('image/png');
-
-          // Görüntüyü indirmek için bir link oluştur
           const link = document.createElement('a');
           link.href = screenshotDataURL;
           link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
@@ -137,8 +107,8 @@
           console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
 
         } catch (error) {
-          console.error("Birleşik canvas'tan fotoğraf çekilirken hata oluştu:", error);
-          alert("Fotoğraf çekilemedi. Tarayıcı izinlerini veya içeriğin yüklenmesini bekleyin. (Hata detayı: " + error.message + ")");
+          console.error("A-Frame screenshot alınırken hata oluştu:", error);
+          alert("Fotoğraf çekilemedi. Tarayıcı izinlerini kontrol edin veya sayfa tamamen yüklenene kadar bekleyin. (Hata detayı: " + error.message + ")");
         }
       }
     </script>
@@ -148,7 +118,8 @@
       mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
-      webgl-renderer="preserveDrawingBuffer: true;" >
+      webgl-renderer="preserveDrawingBuffer: true;" 
+      screenshot="width: 1920; height: 1080;" >
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
@@ -167,7 +138,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek</button>
 
   </body>
 </html>
