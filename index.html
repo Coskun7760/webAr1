@@ -8,11 +8,34 @@
 
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
 
+    <style>
+      /* Butonu AR sahnesinin üzerinde konumlandırmak için stil */
+      .capture-button {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 30px;
+        font-size: 1.2em;
+        background-color: #4CAF50; /* Yeşil */
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 1000; /* AR sahnesinin üzerinde görünmesi için */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: background-color 0.3s ease;
+      }
+      .capture-button:hover {
+        background-color: #45a049;
+      }
+    </style>
+
     <script>
       // Howler.js ses nesnesini global olarak bir kez tanımla
       var backgroundMusic = new Howl({
         src: ['https://coskun7760.github.io/webAr1/ses.mp3'], // Senin ses dosyan
-        // loop: true, // Müziğin döngüde çalmasını sağlar
+        // loop: true, // Müziğin döngüde çalmasını sağlar (yorum satırıydı, olduğu gibi bıraktım)
         volume: 1.0, // Ses seviyesini ayarla (0.0 ile 1.0 arasında)
         autoplay: false // Otomatik başlamasın, biz kontrol edelim
       });
@@ -46,6 +69,37 @@
           });
         },
       });
+
+      // Fotoğraf çekme fonksiyonu buraya eklendi
+      function takeScreenshot() {
+        const sceneEl = document.querySelector('a-scene');
+        if (!sceneEl) {
+          console.error("A-Frame sahnesi bulunamadı.");
+          return;
+        }
+
+        // Sahnenin renderer'ını kullanarak görüntüyü al
+        // MindAR-AFrame, canvas'ı otomatik olarak yönettiği için doğrudan renderer'dan çekebiliriz.
+        // Bazı durumlarda sceneEl.components.renderer.renderer.domElement.toDataURL() da kullanılabilir.
+        const renderer = sceneEl.renderer;
+        if (!renderer) {
+          console.error("A-Frame renderer bulunamadı.");
+          return;
+        }
+        
+        // Geçici olarak kameranın bulunduğu görünümü render et
+        renderer.render(sceneEl.object3D, sceneEl.camera.components.camera.camera);
+        const screenshotDataURL = renderer.domElement.toDataURL('image/png');
+
+        // Görüntüyü indirmek için bir link oluştur
+        const link = document.createElement('a');
+        link.href = screenshotDataURL;
+        link.download = 'MindAR_EkranGoruntusu_' + new Date().getTime() + '.png'; // Benzersiz dosya adı
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        console.log("Ekran görüntüsü alındı ve indirildi.");
+      }
     </script>
   </head>
   <body>
@@ -67,8 +121,11 @@
           scale="0.5 0.5 0.5"
           src="#avatarModel"
           animation-mixer="timeScale: 1">
-		  </a-gltf-model>
+        </a-gltf-model>
       </a-entity>
     </a-scene>
+
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek</button>
+
   </body>
 </html>
