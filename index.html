@@ -29,7 +29,7 @@
       .capture-button:hover {
         background-color: #45a049;
       }
-      /* MindAR tarafından oluşturulan video elemanını bulmak için yardımcı stil (gerekli değil ama görselleştirebilir) */
+      /* MindAR tarafından oluşturulan video elemanını bulmak için yardımcı stil */
       video {
         position: absolute;
         top: 0;
@@ -73,7 +73,7 @@
         },
       });
 
-      // *** Fotoğraf çekme fonksiyonu - EN GÜVENİLİR YAKLAŞIM ***
+      // *** Fotoğraf çekme fonksiyonu - Yeni Birleştirme Yaklaşımı ***
       async function takeScreenshot() {
         console.log("AR fotoğrafı çekiliyor...");
 
@@ -91,33 +91,52 @@
           return;
         }
 
-        const arCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
-        if (!arCanvas) {
+        // A-Frame'in WebGL render ettiği canvas
+        const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
+        if (!arWebGLCanvas) {
           console.error("A-Frame render canvas'ı bulunamadı.");
           alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
           return;
         }
 
         try {
-          // Video elementinin anlık görüntüsünü ImageBitmap olarak al
-          // Bu, cross-origin kısıtlamalarını aşar.
-          const videoImageBitmap = await createImageBitmap(videoElement);
+          // Görüntüleri birleştireceğimiz geçici canvas'ı oluştur
+          const finalCanvas = document.createElement('canvas');
+          finalCanvas.width = videoElement.videoWidth || window.innerWidth;
+          finalCanvas.height = videoElement.videoHeight || window.innerHeight;
+          const ctx = finalCanvas.getContext('2d');
 
-          // Yeni bir canvas oluşturup üzerine önce video görüntüsünü, sonra AR içeriğini çiz
-          const combinedCanvas = document.createElement('canvas');
-          combinedCanvas.width = videoImageBitmap.width;
-          combinedCanvas.height = videoImageBitmap.height;
-          const ctx = combinedCanvas.getContext('2d');
+          // 1. Kamera videosunu çiz
+          // `createImageBitmap` kullanmadan doğrudan video elementini çizmek bazı tarayıcılarda işe yarayabilir,
+          // ancak cross-origin hatalarına neden olabilir. Güvenli yol `createImageBitmap` idi.
+          // Yine de deniyoruz, belki bu kombinasyonda çalışır.
+          ctx.drawImage(videoElement, 0, 0, finalCanvas.width, finalCanvas.height);
 
-          // Video görüntüsünü çiz
-          ctx.drawImage(videoImageBitmap, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          // 2. A-Frame'in 3D modelini içeren WebGL canvas'ını çiz
+          // Bu adımda sorun yaşanıyorsa, sorun ya WebGL context'inin içeriği temizlemesi
+          // ya da tarayıcının güvenlik kısıtlamalarıdır.
+          // preserveDrawingBuffer'ı <a-scene> içinde tuttuk.
+          ctx.drawImage(arWebGLCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
+          
+          // Debugging için: Sadece 3D modelin olduğu canvas'ı kontrol etmek istersen
+          // const testModelDataURL = arWebGLCanvas.toDataURL('image/png');
+          // const testLink = document.createElement('a');
+          // testLink.href = testModelDataURL;
+          // testLink.download = '3D_Model_Only.png';
+          // document.body.appendChild(testLink);
+          // testLink.click();
+          // document.body.removeChild(testLink);
 
-          // AR içeriğini video görüntüsünün üzerine çiz
-          // Not: preserveDrawingBuffer: true ayarı hala önemlidir.
-          ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
 
           // Birleşik canvas'tan veri URL'sini al
-          const screenshotDataURL = combinedCanvas.toDataURL('image/png');
+          const screenshotDataURL = finalCanvas.toDataURL('image/png');
+
+          // Eğer veri URL'si boş veya sadece siyah bir görüntü ise uyarı ver
+          if (screenshotDataURL === 'data:,') { // Boş data URL kontrolü
+            console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
+            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
+            return;
+          }
 
           // İndirme linkini oluştur ve tıkla
           const link = document.createElement('a');
@@ -141,8 +160,7 @@
       mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
-      webgl-renderer="preserveDrawingBuffer: true;" screenshot="" >
-      <a-assets>
+      webgl-renderer="preserveDrawingBuffer: true;" screenshot="" > <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
       </a-assets>
@@ -160,7 +178,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çekk İnşaallah</button>
 
   </body>
 </html>
