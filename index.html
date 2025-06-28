@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+
     <style>
       /* Butonu AR sahnesinin üzerinde konumlandırmak için stil */
       .capture-button {
@@ -27,6 +28,16 @@
       }
       .capture-button:hover {
         background-color: #45a049;
+      }
+      /* MindAR tarafından oluşturulan video elemanını bulmak için yardımcı stil (gerekli değil ama görselleştirebilir) */
+      /* MindAR genellikle kamerayı tam ekran yapar, bu stil render üzerinde değişiklik yapmaz. */
+      video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
     </style>
 
@@ -63,40 +74,71 @@
         },
       });
 
-      // Fotoğraf çekme fonksiyonu - Doğrudan A-Frame / MindAR canvas'ı hedefliyoruz
-      function takeScreenshot() {
-        console.log("Ekran görüntüsü alınıyor...");
-        const sceneEl = document.querySelector('a-scene');
+      // Fotoğraf çekme fonksiyonu - Video akışını ve 3D içeriği birleştiriyoruz
+      async function takeScreenshot() {
+        console.log("AR fotoğrafı çekiliyor...");
 
+        const sceneEl = document.querySelector('a-scene');
         if (!sceneEl) {
           console.error("A-Frame sahnesi bulunamadı.");
+          alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
           return;
         }
 
-        // A-Frame sahnesinin renderer'ının domElement'ı genellikle ana canvas'tır.
-        // Bu, hem kamera görüntüsünü hem de 3D içeriği içermelidir (MindAR bunu birleştiriyorsa).
-        const mainCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
-
-        if (!mainCanvas) {
-          console.error("Ana render canvas'ı bulunamadı.");
-          alert("Fotoğraf çekilemedi: Render canvas'ı bulunamadı.");
+        // 1. MindAR'ın kamera video elementini bul
+        // MindAR genellikle bir <video> etiketi oluşturur ve kamera akışını buraya basar.
+        const videoElement = document.querySelector('video'); 
+        if (!videoElement) {
+          console.error("Kamera video elementi bulunamadı.");
+          alert("Fotoğraf çekilemedi: Kamera videosu bulunamadı. Lütfen kamera izni verdiğinizden emin olun.");
           return;
         }
+
+        // 2. A-Frame'in 3D içeriği çizdiği canvas'ı al
+        const arCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
+        if (!arCanvas) {
+          console.error("A-Frame render canvas'ı bulunamadı.");
+          alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
+          return;
+        }
+
+        // 3. Geçici bir canvas oluştur
+        const combinedCanvas = document.createElement('canvas');
+        combinedCanvas.width = videoElement.videoWidth || window.innerWidth;
+        combinedCanvas.height = videoElement.videoHeight || window.innerHeight;
+        const ctx = combinedCanvas.getContext('2d');
+
+        // Gerekirse çözünürlüğü ayarlamak için:
+        // const scale = 1; // 1 = orijinal çözünürlük, 0.5 = yarım çözünürlük
+        // combinedCanvas.width = (videoElement.videoWidth || window.innerWidth) * scale;
+        // combinedCanvas.height = (videoElement.videoHeight || window.innerHeight) * scale;
+        // ctx.scale(scale, scale);
+
+
+        // 4. Video akışını geçici canvas'a çiz
+        // Video elementinin kendisini çizeriz, böylece arka plan yakalanır.
+        ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
+
+        // 5. 3D modeli içeren AR canvas'ını video üzerine çiz
+        // Transparent (şeffaf) bir arka planı olan 3D canvas'ı video üzerine yerleştiririz.
+        ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
 
         try {
-          const screenshotDataURL = mainCanvas.toDataURL('image/png');
+          // 6. Birleşik canvas'tan görüntüyü al
+          const screenshotDataURL = combinedCanvas.toDataURL('image/png');
 
+          // Görüntüyü indirmek için bir link oluştur
           const link = document.createElement('a');
           link.href = screenshotDataURL;
           link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          console.log("AR fotoğrafı alındı ve indirildi.");
+          console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
 
         } catch (error) {
-          console.error("Fotoğraf çekilirken hata oluştu:", error);
-          alert("Fotoğraf çekilemedi. Tarayıcı izinlerini kontrol edin veya sayfa tamamen yüklenene kadar bekleyin. (Hata detayı: " + error.message + ")");
+          console.error("Birleşik canvas'tan fotoğraf çekilirken hata oluştu:", error);
+          alert("Fotoğraf çekilemedi. Tarayıcı izinlerini veya içeriğin yüklenmesini bekleyin. (Hata detayı: " + error.message + ")");
         }
       }
     </script>
@@ -124,7 +166,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çekkk</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek</button>
 
   </body>
 </html>
