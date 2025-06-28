@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
     <style>
       /* Butonu AR sahnesinin üzerinde konumlandırmak için stil */
@@ -29,25 +30,24 @@
       .capture-button:hover {
         background-color: #45a049;
       }
+      /* MindAR'ın video elemanının stilini kontrol et (gerekirse) */
+      /* MindAR genellikle videoyu arka planda tam ekran yapar. */
+      /* Eğer video elementi ile ilgili bir sorun olursa burayı inceleyebiliriz. */
     </style>
 
     <script>
-      // Howler.js ses nesnesini global olarak bir kez tanımlaa
       var backgroundMusic = new Howl({
-        src: ['https://coskun7760.github.io/webAr1/ses.mp3'], // Senin ses dosyan
-        // loop: true, // Müziğin döngüde çalmasını sağlar (yorum satırıydı, olduğu gibi bıraktım)
-        volume: 1.0, // Ses seviyesini ayarla (0.0 ile 1.0 arasında)
-        autoplay: false // Otomatik başlamasın, biz kontrol edelim
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
+        volume: 1.0,
+        autoplay: false
       });
 
       AFRAME.registerComponent("mytarget", {
         init: function () {
-          const el = this.el; // Hedef entity'yi (mytarget) temsil eder
+          const el = this.el;
 
           el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı! Model görünür olmalı.");
-
-            // Howler.js sesini başlat
             if (backgroundMusic && !backgroundMusic.playing()) {
                 backgroundMusic.play();
                 console.log("Howler.js sesi oynatılıyor.");
@@ -60,8 +60,6 @@
 
           el.addEventListener("targetLost", (event) => {
             console.log("AR Hedefi kaybedildi! Model gizleniyor.");
-
-            // Howler.js sesini durdur
             if (backgroundMusic && backgroundMusic.playing()) {
                 backgroundMusic.pause();
                 console.log("Howler.js sesi durduruldu.");
@@ -70,41 +68,38 @@
         },
       });
 
-      // Fotoğraf çekme fonksiyonu buraya eklendi
-      function takeScreenshot() {
-        const sceneEl = document.querySelector('a-scene');
-        if (!sceneEl) {
-          console.error("A-Frame sahnesi bulunamadı.");
-          return;
+      // Fotoğraf çekme fonksiyonu html2canvas ile güncellendi
+      async function takeScreenshot() {
+        console.log("Ekran görüntüsü alınıyor...");
+        // Tüm body elementini yakalamak, MindAR'ın video akışını da içerir.
+        // Eğer belirli bir alanı yakalamak istersen, o elementin ID'sini verebilirsin.
+        const bodyElement = document.body; 
+
+        try {
+          const canvas = await html2canvas(bodyElement, {
+            useCORS: true, // Eğer cross-origin kaynaklar varsa bunu aç
+            allowTaint: true, // Kirli canvas'a izin ver (güvenlik açığı oluşturabilir, ama video için gerekli olabilir)
+            backgroundColor: null, // Şeffaf arka planı koru
+            // Eğer MindAR'ın video elementi tam olarak yakalanmazsa,
+            // aşağıdaki hidden: true seçeneğini false yapmayı deneyebilirsin,
+            // ancak genellikle varsayılan ayarlar çoğu durumda yeterlidir.
+            // hidden: false 
+          });
+
+          const screenshotDataURL = canvas.toDataURL('image/png');
+
+          const link = document.createElement('a');
+          link.href = screenshotDataURL;
+          link.download = 'MindAR_AR_Goruntusu_' + new Date().getTime() + '.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          console.log("AR ekran görüntüsü alındı ve indirildi.");
+
+        } catch (error) {
+          console.error("Ekran görüntüsü alınırken hata oluştu:", error);
+          alert("Fotoğraf çekilemedi. Tarayıcı izinlerini kontrol edin veya sayfa tamamen yüklenene kadar bekleyin.");
         }
-
-        const cameraEl = sceneEl.querySelector('a-camera');
-        if (!cameraEl) {
-          console.error("A-Frame kamerası bulunamadı.");
-          return;
-        }
-        const camera = cameraEl.components.camera.camera; // THREE.js kamera objesine erişim
-
-        const renderer = sceneEl.renderer;
-        if (!renderer) {
-          console.error("A-Frame renderer bulunamadı.");
-          return;
-        }
-        
-        // Render etmeden önce sahnenin güncel state'ini yakala
-        renderer.render(sceneEl.object3D, camera); // Doğrudan THREE.js kamera objesini kullan
-
-        // Canvas'ı al ve Data URL'e dönüştür
-        const screenshotDataURL = renderer.domElement.toDataURL('image/png');
-
-        // Görüntüyü indirmek için bir link oluştur
-        const link = document.createElement('a');
-        link.href = screenshotDataURL;
-        link.download = 'MindAR_EkranGoruntusu_' + new Date().getTime() + '.png'; // Benzersiz dosya adı
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        console.log("Ekran görüntüsü alındı ve indirildi.");
       }
     </script>
   </head>
@@ -131,7 +126,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çekk</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek</button>
 
   </body>
 </html>
