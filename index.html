@@ -9,24 +9,22 @@
 
     <style>
       body {
-        font-family: sans-serif;
-        padding: 20px;
-        background: #f9f9f9;
         margin: 0;
         overflow: hidden;
       }
 
-      #ekranAlBtn {
+      #screenshotBtn {
         position: absolute;
         top: 20px;
         left: 20px;
-        z-index: 999;
+        z-index: 9999;
         padding: 10px 15px;
         font-size: 16px;
-        background: #007bff;
+        background-color: #28a745;
         color: white;
         border: none;
         border-radius: 5px;
+        cursor: pointer;
       }
     </style>
 
@@ -58,25 +56,43 @@
         },
       });
 
-      function sahneGoruntusuAl() {
-        const scene = document.querySelector("a-scene");
+      // Ekran görüntüsünü al (kamera + model + her şey)
+      async function tamEkranGoruntusu() {
+        try {
+          const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: { mediaSource: "screen" }
+          });
 
-        // render edilmiş canvas'ı al
-        const canvas = scene.renderer.domElement;
+          const video = document.createElement("video");
+          video.srcObject = stream;
+          video.play();
 
-        // Görüntüyü indir
-        const imageData = canvas.toDataURL("image/png");
+          video.onloadeddata = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
 
-        const link = document.createElement("a");
-        link.href = imageData;
-        link.download = "aframe-ekran-goruntusu.png";
-        link.click();
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(blob => {
+              const link = document.createElement("a");
+              link.href = URL.createObjectURL(blob);
+              link.download = "tum-sahne-goruntusu.png";
+              link.click();
+
+              stream.getTracks().forEach(track => track.stop()); // yayını kapat
+            });
+          };
+        } catch (err) {
+          alert("Ekran görüntüsü alınamadı: " + err.message);
+        }
       }
     </script>
   </head>
 
   <body>
-    <button id="ekranAlBtn" onclick="sahneGoruntusuAl()">Sahne Görüntüsü Al</button>
+    <button id="screenshotBtn" onclick="tamEkranGoruntusu()">📸 Ekran Görüntüsü Al</button>
 
     <a-scene
       mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
@@ -84,7 +100,7 @@
       device-orientation-permission-ui="enabled: false"
     >
       <a-assets>
-        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
+        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf" crossorigin="anonymous"></a-asset-item>
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
       </a-assets>
 
