@@ -73,7 +73,7 @@
         },
       });
 
-      // *** Fotoğraf çekme fonksiyonu - GÜNCEL YAKLAŞIM ***
+      // *** Fotoğraf çekme fonksiyonu - YENİ YAKLAŞIM ***
       async function takeScreenshot() {
         console.log("AR fotoğrafı çekiliyor...");
 
@@ -91,13 +91,6 @@
           return;
         }
 
-        const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
-        if (!arWebGLCanvas) {
-          console.error("A-Frame render canvas'ı bulunamadı.");
-          alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
-          return;
-        }
-
         try {
           // Videoyu duraklat (Senkronizasyon için önemli)
           videoElement.pause();
@@ -105,27 +98,26 @@
           // Geçici canvas oluştur
           const combinedCanvas = document.createElement("canvas");
           
-          // *** BURASI GÜNCELLENDİ: Videonun gerçek piksel boyutlarını kullan ***
-          let captureWidth = videoElement.videoWidth;
-          let captureHeight = videoElement.videoHeight;
+          // Videonun client boyutlarını kullanarak canvas boyutlarını ayarla
+          // İki katına çıkarmak daha yüksek çözünürlük sağlar.
+          let v_width = videoElement.clientWidth * 2;
+          let v_height = videoElement.clientHeight * 2;
           
-          // Eğer video boyutları sıfır gelirse (nadiren, video daha başlamadıysa vb.), viewport boyutlarını kullan (fallback)
-          if (captureWidth === 0 || captureHeight === 0) {
-              captureWidth = window.innerWidth * 2; // Yüksek çözünürlük için 2x
-              captureHeight = window.innerHeight * 2; // Yüksek çözünürlük için 2x
-              console.warn("Video gerçek piksel boyutları alınamadı, fallback olarak viewport boyutları kullanılıyor.");
-          }
-
-          combinedCanvas.width = captureWidth;
-          combinedCanvas.height = captureHeight;
+          combinedCanvas.width = v_width;
+          combinedCanvas.height = v_height;
 
           const ctx = combinedCanvas.getContext('2d');
 
+          // Videonun CSS top değerini al
+          let videoStyle = window.getComputedStyle(videoElement);
+          let videoTopOffset = parseFloat(videoStyle.getPropertyValue('top')) || 0; // Eğer top yoksa 0 varsay
+
           // 1. Videoyu canvas'a çiz
-          // `videoTopOffset` gibi CSS tabanlı ofsetlere artık ihtiyacımız yok
-          ctx.drawImage(videoElement, 0, 0, captureWidth, captureHeight);
+          // videoTopOffset kullanarak videoyu doğru dikey konumda çizer
+          ctx.drawImage(videoElement, 0, videoTopOffset, v_width, v_height);
 
           // 2. A-Frame'in 3D modelini içeren canvas'ı al
+          // screenshot bileşeninin getCanvas('perspective') metodu WebGL canvas'ını verir.
           let arCanvasForScreenshot = document.querySelector('a-scene').components.screenshot.getCanvas('perspective');
 
           if (!arCanvasForScreenshot) {
@@ -136,8 +128,8 @@
 
           // 3. 3D modeli içeren canvas'ı, video görüntüsünün üzerine çiz
           // Boyutları video ile aynı olacak şekilde ayarla
-          ctx.drawImage(arCanvasForScreenshot, 0, 0, captureWidth, captureHeight);
-          
+          ctx.drawImage(arCanvasForScreenshot, 0, 0, v_width, v_height);
+
           // Birleşik canvas'tan veri URL'sini al
           const screenshotDataURL = combinedCanvas.toDataURL('image/png');
 
@@ -175,9 +167,7 @@
       mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
-      webgl-renderer="preserveDrawingBuffer: true;" 
-      screenshot="" > 
-      <a-assets>
+      webgl-renderer="preserveDrawingBuffer: true;" screenshot="" > <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
       </a-assets>
