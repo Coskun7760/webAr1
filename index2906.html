@@ -5,53 +5,69 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
 
+    <style>
+      .capture-button {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        font-size: 18px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 1000;
+      }
+    </style>
+
     <script>
-      // Howler.js ses nesnesini global olarak bir kez tanımla
       var backgroundMusic = new Howl({
-        src: ['https://coskun7760.github.io/webAr1/ses.mp3'], // Senin ses dosyan
-        // loop: true, // Müziğin döngüde çalmasını sağlar
-        volume: 1.0, // Ses seviyesini ayarla (0.0 ile 1.0 arasında)
-        autoplay: false // Otomatik başlamasın, biz kontrol edelim
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
+        volume: 1.0,
+        autoplay: false
       });
 
       AFRAME.registerComponent("mytarget", {
         init: function () {
-          const el = this.el; // Hedef entity'yi (mytarget) temsil eder
-
-          el.addEventListener("targetFound", (event) => {
+          const el = this.el;
+          el.addEventListener("targetFound", () => {
             console.log("AR Hedefi algılandı! Model görünür olmalı.");
-
-            // Howler.js sesini başlat
             if (backgroundMusic && !backgroundMusic.playing()) {
-                backgroundMusic.play();
-                console.log("Howler.js sesi oynatılıyor.");
-            } else if (backgroundMusic && backgroundMusic.playing()) {
-                console.log("Howler.js sesi zaten çalıyor.");
-            } else {
-                console.warn("Howler.js sesi başlatılamadı.");
+              backgroundMusic.play();
             }
           });
-
-          el.addEventListener("targetLost", (event) => {
+          el.addEventListener("targetLost", () => {
             console.log("AR Hedefi kaybedildi! Model gizleniyor.");
-
-            // Howler.js sesini durdur
             if (backgroundMusic && backgroundMusic.playing()) {
-                backgroundMusic.pause();
-                console.log("Howler.js sesi durduruldu.");
+              backgroundMusic.pause();
             }
           });
         },
       });
+
+      function takeScreenshot() {
+        const canvas = document.querySelector('a-scene').renderer.domElement;
+        const imageData = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = imageData;
+        link.download = 'ar_fotografi_' + Date.now() + '.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     </script>
   </head>
   <body>
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001" vr-mode-ui="enabled: false"
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
+      vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
+      webgl-renderer="preserveDrawingBuffer: true"
+      embedded
     >
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
@@ -67,8 +83,10 @@
           scale="0.5 0.5 0.5"
           src="#avatarModel"
           animation-mixer="timeScale: 1">
-		  </a-gltf-model>
+        </a-gltf-model>
       </a-entity>
     </a-scene>
+
+    <button class="capture-button" onclick="takeScreenshot()">📸 Fotoğraf çÇek</button>
   </body>
 </html>
