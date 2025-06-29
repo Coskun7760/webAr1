@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="tr">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MindAR Kamera + 3D Fotoğraf</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MindAR + Kamera + 3D Screenshot</title>
 
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -23,19 +24,9 @@
         cursor: pointer;
         z-index: 1000;
       }
-
-      video {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
     </style>
 
     <script>
-      // Arka plan müziği
       const backgroundMusic = new Howl({
         src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
         volume: 1.0,
@@ -54,39 +45,13 @@
         },
       });
 
-      async function takeScreenshot() {
-        const sceneEl = document.querySelector('a-scene');
-        const rendererCanvas = sceneEl.renderer.domElement;
-        const video = document.querySelector('video');
-
-        if (!rendererCanvas || !video || video.readyState < 2) {
-          alert("Görüntü alınamadı. Video veya WebGL canvas hazır değil.");
-          return;
-        }
-
-        const width = rendererCanvas.width;
-        const height = rendererCanvas.height;
-
-        // Geçici canvas oluştur
-        const finalCanvas = document.createElement('canvas');
-        finalCanvas.width = width;
-        finalCanvas.height = height;
-        const ctx = finalCanvas.getContext('2d');
-
-        // Kamera görüntüsünü çiz
-        ctx.drawImage(video, 0, 0, width, height);
-
-        // 3D model canvas'ını çiz
-        ctx.drawImage(rendererCanvas, 0, 0, width, height);
-
-        // Veriyi indir
-        const dataURL = finalCanvas.toDataURL('image/png');
+      function takeScreenshot() {
+        const canvas = document.querySelector('a-scene').renderer.domElement;
+        const dataURL = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = dataURL;
-        link.download = 'ar_fotografi_' + Date.now() + '.png';
-        document.body.appendChild(link);
+        link.download = 'ar-fotograf_' + Date.now() + '.png';
         link.click();
-        document.body.removeChild(link);
       }
     </script>
   </head>
@@ -97,10 +62,14 @@
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
       webgl-renderer="preserveDrawingBuffer: true"
+      screenshot
     >
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
       </a-assets>
+
+      <!-- Kamera görüntüsünü 3D sahneye yerleştir (arka plan olarak) -->
+      <a-entity id="camera-plane" position="0 0 -1" geometry="primitive: plane; height: 2; width: 2.5" material="shader: flat; src: #cameraTexture"></a-entity>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
@@ -110,11 +79,40 @@
           position="0 -0.5 0.1"
           scale="0.5 0.5 0.5"
           src="#avatarModel"
-          animation-mixer="timeScale: 1">
-        </a-gltf-model>
+          animation-mixer="timeScale: 1"
+        ></a-gltf-model>
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraff Çek</button>
+    <!-- Gizli video elementi: MindAR tarafından kullanılır -->
+    <video id="cameraFeed" autoplay playsinline webkit-playsinline style="display: none;"></video>
+
+    <!-- Buton -->
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğrafff Çek</button>
+
+    <script>
+      // MindAR kamera akışını yakalayıp sahneye texture olarak bindir
+      const video = document.querySelector("#cameraFeed");
+
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "environment" }, audio: false })
+        .then((stream) => {
+          video.srcObject = stream;
+
+          // Video texture'ı hazır olunca A-Frame düzlemine ata
+          video.onloadeddata = () => {
+            const scene = document.querySelector('a-scene');
+            const texture = new THREE.VideoTexture(video);
+            const cameraPlane = scene.querySelector('#camera-plane');
+            cameraPlane.getObject3D('mesh').material.map = texture;
+            cameraPlane.getObject3D('mesh').material.needsUpdate = true;
+          };
+        })
+        .catch((err) => {
+          alert("Kamera erişimi reddedildi veya hata oluştu.");
+          console.error(err);
+
+        });
+    </script>
   </body>
 </html>
