@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
-
+ <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
       // Howler.js ses nesnesini global olarak bir kez tanımla
       var backgroundMusic = new Howl({
@@ -47,6 +47,20 @@
         },
       });
     </script>
+	  
+	  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    .bolum {
+      height: 800px;
+      margin-bottom: 20px;
+      background-color: #e0e0e0;
+      padding: 10px;
+    }
+  </style>
   </head>
   <body>
     <a-scene
@@ -70,5 +84,26 @@
 		  </a-gltf-model>
       </a-entity>
     </a-scene>
+	  
+	  <button onclick="tumSayfayiCek()">Tüm Sayfanın Ekran Görüntüsü</button>
+
+  <script>
+    function tumSayfayiCek() {
+      html2canvas(document.body, {
+        useCORS: true,
+        scrollY: -window.scrollY, // Sayfa kaydırmasını sıfırlamak için
+        windowWidth: document.body.scrollWidth,
+        windowHeight: document.body.scrollHeight
+      }).then(canvas => {
+        // Görüntüyü indir
+        canvas.toBlob(function(blob) {
+          const link = document.createElement('a');
+          link.download = "tum-sayfa-goruntusu.png";
+          link.href = URL.createObjectURL(blob);
+          link.click();
+        });
+      });
+    }
+  </script>
   </body>
 </html>
