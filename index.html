@@ -5,86 +5,53 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
 
-    <style>
-      .capture-button {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 24px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        z-index: 9999;
-        cursor: pointer;
-      }
-    </style>
-
     <script>
+      // Howler.js ses nesnesini global olarak bir kez tanımla
       var backgroundMusic = new Howl({
-        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
-        volume: 1.0,
-        autoplay: false
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'], // Senin ses dosyan
+        // loop: true, // Müziğin döngüde çalmasını sağlar
+        volume: 1.0, // Ses seviyesini ayarla (0.0 ile 1.0 arasında)
+        autoplay: false // Otomatik başlamasın, biz kontrol edelim
       });
 
       AFRAME.registerComponent("mytarget", {
         init: function () {
-          const el = this.el;
-          el.addEventListener("targetFound", () => {
-            if (!backgroundMusic.playing()) backgroundMusic.play();
+          const el = this.el; // Hedef entity'yi (mytarget) temsil eder
+
+          el.addEventListener("targetFound", (event) => {
+            console.log("AR Hedefi algılandı! Model görünür olmalı.");
+
+            // Howler.js sesini başlat
+            if (backgroundMusic && !backgroundMusic.playing()) {
+                backgroundMusic.play();
+                console.log("Howler.js sesi oynatılıyor.");
+            } else if (backgroundMusic && backgroundMusic.playing()) {
+                console.log("Howler.js sesi zaten çalıyor.");
+            } else {
+                console.warn("Howler.js sesi başlatılamadı.");
+            }
           });
-          el.addEventListener("targetLost", () => {
-            if (backgroundMusic.playing()) backgroundMusic.pause();
+
+          el.addEventListener("targetLost", (event) => {
+            console.log("AR Hedefi kaybedildi! Model gizleniyor.");
+
+            // Howler.js sesini durdur
+            if (backgroundMusic && backgroundMusic.playing()) {
+                backgroundMusic.pause();
+                console.log("Howler.js sesi durduruldu.");
+            }
           });
-        }
+        },
       });
-
-      async function captureARScene() {
-        const video = document.querySelector("video");
-        const scene = document.querySelector("a-scene");
-        const rendererCanvas = scene.renderer && scene.renderer.domElement;
-
-        if (!video || !rendererCanvas) {
-          alert("Kamera veya 3D sahne bulunamadı.");
-          return;
-        }
-
-        const canvas = document.createElement("canvas");
-        const width = video.videoWidth || window.innerWidth;
-        const height = video.videoHeight || window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-
-        // Kamera görüntüsünü çiz
-        ctx.drawImage(video, 0, 0, width, height);
-
-        // 3D modeli çiz
-        ctx.drawImage(rendererCanvas, 0, 0, width, height);
-
-        // Fotoğrafı indir
-        const dataURL = canvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = dataURL;
-        link.download = "ar-fotograf.png";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
     </script>
   </head>
   <body>
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
-      vr-mode-ui="enabled: false"
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001" vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
-      webgl-renderer="preserveDrawingBuffer: true"
-      screenshot
-      embedded
     >
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
@@ -100,10 +67,67 @@
           scale="0.5 0.5 0.5"
           src="#avatarModel"
           animation-mixer="timeScale: 1">
-        </a-gltf-model>
+		  </a-gltf-model>
       </a-entity>
     </a-scene>
-
-    <button class="capture-button" onclick="captureARScene()">📸 Fotoğraf Çek</button>
   </body>
+	
+	<button id="captureBtn" style="position: fixed; top: 20px; left: 20px; z-index: 9999; padding: 10px; font-size: 16px;">
+  Ekran Görüntüsü Al
+</button>
+
+<script>
+  document.getElementById('captureBtn').addEventListener('click', async () => {
+    const scene = document.querySelector('a-scene');
+    const video = document.querySelector('video');
+
+    if (!scene || !scene.renderer) {
+      alert('Sahne hazır değil.');
+      return;
+    }
+
+    const sceneCanvas = scene.renderer.domElement;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Video yoksa sadece sahne renderını yakala
+    if (!video) {
+      canvas.width = sceneCanvas.width;
+      canvas.height = sceneCanvas.height;
+      ctx.drawImage(sceneCanvas, 0, 0);
+      downloadCanvas(canvas);
+      return;
+    }
+
+    // Video ve sahne boyutlarını al
+    const w = Math.max(video.videoWidth, sceneCanvas.width);
+    const h = Math.max(video.videoHeight, sceneCanvas.height);
+
+    canvas.width = w;
+    canvas.height = h;
+
+    // Videoyu canvas'a çiz
+    // Eğer video görünür değilse bu kısım boş olabilir
+    try {
+      ctx.drawImage(video, 0, 0, w, h);
+    } catch (e) {
+      console.warn('Video canvas\'a çizilemedi:', e);
+    }
+
+    // Sahne renderını videonun üstüne çiz
+    ctx.drawImage(sceneCanvas, 0, 0, w, h);
+
+    downloadCanvas(canvas);
+
+    function downloadCanvas(canvas) {
+      canvas.toBlob((blob) => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'ekran-goruntusu.png';
+        link.click();
+      });
+    }
+  });
+</script>
+
 </html>
