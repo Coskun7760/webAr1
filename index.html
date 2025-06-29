@@ -8,28 +8,23 @@
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
 
     <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-      }
-
-      #screenshotBtn {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        z-index: 9999;
-        padding: 10px 15px;
-        font-size: 16px;
-        background-color: #28a745;
+      .capture-button {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        background: #007bff;
         color: white;
         border: none;
-        border-radius: 5px;
+        border-radius: 8px;
+        font-size: 16px;
+        z-index: 9999;
         cursor: pointer;
       }
     </style>
 
     <script>
-      // Howler.js ses nesnesi
       var backgroundMusic = new Howl({
         src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
         volume: 1.0,
@@ -39,68 +34,60 @@
       AFRAME.registerComponent("mytarget", {
         init: function () {
           const el = this.el;
-
           el.addEventListener("targetFound", () => {
-            console.log("AR Hedefi algılandı!");
-            if (!backgroundMusic.playing()) {
-              backgroundMusic.play();
-            }
+            if (!backgroundMusic.playing()) backgroundMusic.play();
           });
-
           el.addEventListener("targetLost", () => {
-            console.log("AR Hedefi kaybedildi!");
-            if (backgroundMusic.playing()) {
-              backgroundMusic.pause();
-            }
+            if (backgroundMusic.playing()) backgroundMusic.pause();
           });
-        },
+        }
       });
 
-      // Ekran görüntüsünü al (kamera + model + her şey)
-      async function tamEkranGoruntusu() {
-        try {
-          const stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { mediaSource: "screen" }
-          });
+      async function captureARScene() {
+        const video = document.querySelector("video");
+        const scene = document.querySelector("a-scene");
+        const rendererCanvas = scene.renderer && scene.renderer.domElement;
 
-          const video = document.createElement("video");
-          video.srcObject = stream;
-          video.play();
-
-          video.onloadeddata = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext("2d");
-
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            canvas.toBlob(blob => {
-              const link = document.createElement("a");
-              link.href = URL.createObjectURL(blob);
-              link.download = "tum-sahne-goruntusu.png";
-              link.click();
-
-              stream.getTracks().forEach(track => track.stop()); // yayını kapat
-            });
-          };
-        } catch (err) {
-          alert("Ekran görüntüsü alınamadı: " + err.message);
+        if (!video || !rendererCanvas) {
+          alert("Kamera veya 3D sahne bulunamadı.");
+          return;
         }
+
+        const canvas = document.createElement("canvas");
+        const width = video.videoWidth || window.innerWidth;
+        const height = video.videoHeight || window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+
+        // Kamera görüntüsünü çiz
+        ctx.drawImage(video, 0, 0, width, height);
+
+        // 3D modeli çiz
+        ctx.drawImage(rendererCanvas, 0, 0, width, height);
+
+        // Fotoğrafı indir
+        const dataURL = canvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.href = dataURL;
+        link.download = "ar-fotograf.png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
     </script>
   </head>
-
   <body>
-    <button id="screenshotBtn" onclick="tamEkranGoruntusu()">📸 Ekran Görüntüsü Al</button>
-
     <a-scene
       mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
+      webgl-renderer="preserveDrawingBuffer: true"
+      screenshot
+      embedded
     >
       <a-assets>
-        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf" crossorigin="anonymous"></a-asset-item>
+        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
       </a-assets>
 
@@ -116,5 +103,7 @@
         </a-gltf-model>
       </a-entity>
     </a-scene>
+
+    <button class="capture-button" onclick="captureARScene()">📸 Fotoğraf Çek</button>
   </body>
 </html>
