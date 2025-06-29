@@ -2,7 +2,7 @@
 <html lang="tr">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MindAR + 3D Screenshot</title>
+    <title>MindAR Kamera + 3D Fotoğraf</title>
 
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -22,10 +22,15 @@
         border-radius: 8px;
         cursor: pointer;
         z-index: 1000;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       }
-      .capture-button:hover {
-        background-color: #45a049;
+
+      video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
     </style>
 
@@ -37,35 +42,48 @@
         autoplay: false
       });
 
-      // MindAR hedef olayları
       AFRAME.registerComponent("mytarget", {
         init: function () {
           const el = this.el;
-
           el.addEventListener("targetFound", () => {
             if (!backgroundMusic.playing()) backgroundMusic.play();
           });
-
           el.addEventListener("targetLost", () => {
             if (backgroundMusic.playing()) backgroundMusic.pause();
           });
         },
       });
 
-      // Fotoğraf çekme fonksiyonu
-      function takeScreenshot() {
+      async function takeScreenshot() {
         const sceneEl = document.querySelector('a-scene');
-        const canvas = sceneEl.components.screenshot.getCanvas('perspective');
+        const rendererCanvas = sceneEl.renderer.domElement;
+        const video = document.querySelector('video');
 
-        if (!canvas) {
-          alert("Ekran görüntüsü alınamadı.");
+        if (!rendererCanvas || !video || video.readyState < 2) {
+          alert("Görüntü alınamadı. Video veya WebGL canvas hazır değil.");
           return;
         }
 
-        const dataURL = canvas.toDataURL('image/png');
+        const width = rendererCanvas.width;
+        const height = rendererCanvas.height;
+
+        // Geçici canvas oluştur
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = width;
+        finalCanvas.height = height;
+        const ctx = finalCanvas.getContext('2d');
+
+        // Kamera görüntüsünü çiz
+        ctx.drawImage(video, 0, 0, width, height);
+
+        // 3D model canvas'ını çiz
+        ctx.drawImage(rendererCanvas, 0, 0, width, height);
+
+        // Veriyi indir
+        const dataURL = finalCanvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.href = dataURL;
-        link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
+        link.download = 'ar_fotografi_' + Date.now() + '.png';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -79,8 +97,7 @@
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
       webgl-renderer="preserveDrawingBuffer: true"
-      screenshot="">
-
+    >
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
       </a-assets>
@@ -98,6 +115,6 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraff Çek</button>
   </body>
 </html>
