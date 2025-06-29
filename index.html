@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MindAR + Kamera + 3D Screenshot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MindAR + Kamera + 3D Fotoğraf</title>
 
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -15,9 +15,9 @@
         bottom: 20px;
         left: 50%;
         transform: translateX(-50%);
-        padding: 15px 30px;
-        font-size: 1.2em;
-        background-color: #4CAF50;
+        padding: 12px 24px;
+        font-size: 18px;
+        background: #28a745;
         color: white;
         border: none;
         border-radius: 8px;
@@ -25,94 +25,80 @@
         z-index: 1000;
       }
     </style>
-
-    <script>
-      const backgroundMusic = new Howl({
-        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
-        volume: 1.0,
-        autoplay: false
-      });
-
-      AFRAME.registerComponent("mytarget", {
-        init: function () {
-          const el = this.el;
-          el.addEventListener("targetFound", () => {
-            if (!backgroundMusic.playing()) backgroundMusic.play();
-          });
-          el.addEventListener("targetLost", () => {
-            if (backgroundMusic.playing()) backgroundMusic.pause();
-          });
-        },
-      });
-
-      function takeScreenshot() {
-        const canvas = document.querySelector('a-scene').renderer.domElement;
-        const dataURL = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = dataURL;
-        link.download = 'ar-fotograf_' + Date.now() + '.png';
-        link.click();
-      }
-    </script>
   </head>
 
   <body>
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta:0.001"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
       webgl-renderer="preserveDrawingBuffer: true"
-      screenshot
     >
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
       </a-assets>
 
-      <!-- Kamera görüntüsünü 3D sahneye yerleştir (arka plan olarak) -->
-      <a-entity id="camera-plane" position="0 0 -1" geometry="primitive: plane; height: 2; width: 2.5" material="shader: flat; src: #cameraTexture"></a-entity>
+      <!-- Kamera görüntüsü için görünmez plane -->
+      <a-entity id="cameraPlane"
+                geometry="primitive: plane; width: 1.78; height: 1" 
+                material="shader: flat; src: #cameraVideoTexture"
+                position="0 0 -1">
+      </a-entity>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
-        <a-gltf-model
-          id="animatedModel"
-          position="0 -0.5 0.1"
-          scale="0.5 0.5 0.5"
-          src="#avatarModel"
-          animation-mixer="timeScale: 1"
-        ></a-gltf-model>
+      <a-entity id="mytarget" mindar-image-target="targetIndex: 0"
+                event-set__found="_event: targetFound; _target: #animatedModel; visible: true"
+                event-set__lost="_event: targetLost; _target: #animatedModel; visible: false">
+        <a-gltf-model id="animatedModel" src="#avatarModel"
+                      position="0 -0.5 0.1" scale="0.5 0.5 0.5"
+                      visible="false" animation-mixer>
+        </a-gltf-model>
       </a-entity>
     </a-scene>
 
-    <!-- Gizli video elementi: MindAR tarafından kullanılır -->
-    <video id="cameraFeed" autoplay playsinline webkit-playsinline style="display: none;"></video>
-
-    <!-- Buton -->
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğrafff Çek</button>
+    <button class="capture-button" onclick="takeScreenshot()">📸 Fotoğraf Çek</button>
 
     <script>
-      // MindAR kamera akışını yakalayıp sahneye texture olarak bindir
-      const video = document.querySelector("#cameraFeed");
+      // Howler ses
+      const bgm = new Howl({ src: ['https://coskun7760.github.io/webAr1/ses.mp3'], volume:1 });
 
-      navigator.mediaDevices
-        .getUserMedia({ video: { facingMode: "environment" }, audio: false })
-        .then((stream) => {
+      // AR hedef algılama için ses kontrolü
+      document.querySelector('#mytarget').addEventListener('targetFound', () => bgm.play());
+      document.querySelector('#mytarget').addEventListener('targetLost', () => bgm.stop());
+
+      // Kamera stream + videoyu textüre çevirme
+      const video = document.createElement('video');
+      video.setAttribute('autoplay', '');
+      video.setAttribute('playsinline', '');
+      video.style.display = 'none';
+      document.body.appendChild(video);
+
+      navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false })
+        .then(stream => {
           video.srcObject = stream;
-
-          // Video texture'ı hazır olunca A-Frame düzlemine ata
           video.onloadeddata = () => {
-            const scene = document.querySelector('a-scene');
+            const sceneEl = document.querySelector('a-scene');
             const texture = new THREE.VideoTexture(video);
-            const cameraPlane = scene.querySelector('#camera-plane');
-            cameraPlane.getObject3D('mesh').material.map = texture;
-            cameraPlane.getObject3D('mesh').material.needsUpdate = true;
+            texture.minFilter = THREE.LinearFilter;
+            sceneEl.querySelector('#cameraPlane').getObject3D('mesh').material.map = texture;
+            sceneEl.querySelector('#cameraPlane').getObject3D('mesh').material.needsUpdate = true;
           };
         })
-        .catch((err) => {
-          alert("Kamera erişimi reddedildi veya hata oluştu.");
+        .catch(err => {
+          alert('Kamera erişimi reddedildi veya hata oluştu.');
           console.error(err);
-
         });
+
+      // Ekran görüntüsü alma
+      function takeScreenshot() {
+        const canvas = document.querySelector('a-scene').renderer.domElement;
+        const data = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = data;
+        link.download = `ar_photo_${Date.now()}.png`;
+        link.click();
+      }
     </script>
   </body>
 </html>
