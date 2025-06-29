@@ -73,7 +73,7 @@
         },
       });
 
-      // *** Fotoğraf çekme fonksiyonu - GÜNCEL YAKLAŞIM ***
+      // *** Fotoğraf çekme fonksiyonu - DAHA YÜKSEK ÇÖZÜNÜRLÜK İÇİN GÜNCELLENDİ ***
       async function takeScreenshot() {
         console.log("AR fotoğrafı çekiliyor...");
 
@@ -105,28 +105,38 @@
           // Geçici canvas oluştur
           const combinedCanvas = document.createElement("canvas");
           
-          // *** BURASI GÜNCELLENDİ: Videonun gerçek piksel boyutlarını kullan ***
+          // *** BURASI GÜNCELLENDİ: Daha yüksek çözünürlük için strateji ***
           let captureWidth = videoElement.videoWidth;
           let captureHeight = videoElement.videoHeight;
-          
-          // Eğer video boyutları sıfır gelirse (nadiren, video daha başlamadıysa vb.), viewport boyutlarını kullan (fallback)
+
+          // Eğer videoWidth ve videoHeight geçerli değerlerse, bunları kullan.
+          // Aksi takdirde (örn. video henüz yüklenmediyse), window.innerWidth/Height kullan.
           if (captureWidth === 0 || captureHeight === 0) {
-              captureWidth = window.innerWidth * 2; // Yüksek çözünürlük için 2x
-              captureHeight = window.innerHeight * 2; // Yüksek çözünürlük için 2x
-              console.warn("Video gerçek piksel boyutları alınamadı, fallback olarak viewport boyutları kullanılıyor.");
+              console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
+              captureWidth = window.innerWidth;
+              captureHeight = window.innerHeight;
           }
 
-          combinedCanvas.width = captureWidth;
-          combinedCanvas.height = captureHeight;
+          // Çözünürlüğü artırmak için bir çarpan kullan (örneğin 2x, 3x)
+          // `window.devicePixelRatio` da kullanılabilir ancak bazı cihazlarda çok yüksek değerler verebilir.
+          const resolutionMultiplier = 2; // Bu değeri deneyerek istediğiniz çözünürlüğü bulun
+                                          // Örneğin 1.5, 2, 3 gibi değerler deneyebilirsiniz.
+
+          combinedCanvas.width = captureWidth * resolutionMultiplier;
+          combinedCanvas.height = captureHeight * resolutionMultiplier;
 
           const ctx = combinedCanvas.getContext('2d');
 
+          // Çizim kalitesini artır (sadece desteklenen tarayıcılarda)
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
           // 1. Videoyu canvas'a çiz
-          // `videoTopOffset` gibi CSS tabanlı ofsetlere artık ihtiyacımız yok
-          ctx.drawImage(videoElement, 0, 0, captureWidth, captureHeight);
+          // Canvas'ın yeni, yüksek çözünürlüklü boyutlarına ölçekle
+          ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
 
           // 2. A-Frame'in 3D modelini içeren canvas'ı al
-          let arCanvasForScreenshot = document.querySelector('a-scene').components.screenshot.getCanvas('perspective');
+          let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
 
           if (!arCanvasForScreenshot) {
               console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
@@ -135,8 +145,8 @@
           }
 
           // 3. 3D modeli içeren canvas'ı, video görüntüsünün üzerine çiz
-          // Boyutları video ile aynı olacak şekilde ayarla
-          ctx.drawImage(arCanvasForScreenshot, 0, 0, captureWidth, captureHeight);
+          // 3D canvas'ını da yeni, yüksek çözünürlüklü boyutlara ölçekle
+          ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
           
           // Birleşik canvas'tan veri URL'sini al
           const screenshotDataURL = combinedCanvas.toDataURL('image/png');
