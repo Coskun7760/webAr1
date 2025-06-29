@@ -8,51 +8,23 @@
 
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
 
-    <style>
-      /* Butonu AR sahnesinin üzerinde konumlandırmak için stil */
-      .capture-button {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 15px 30px;
-        font-size: 1.2em;
-        background-color: #4CAF50; /* Yeşil */
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        z-index: 1000; /* AR sahnesinin üzerinde görünmesi için */
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        transition: background-color 0.3s ease;
-      }
-      .capture-button:hover {
-        background-color: #45a049;
-      }
-      /* MindAR tarafından oluşturulan video elemanını bulmak için yardımcı stil */
-      video {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-    </style>
-
     <script>
+      // Howler.js ses nesnesini global olarak bir kez tanımla
       var backgroundMusic = new Howl({
-        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
-        volume: 1.0,
-        autoplay: false
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'], // Senin ses dosyan
+        // loop: true, // Müziğin döngüde çalmasını sağlar
+        volume: 1.0, // Ses seviyesini ayarla (0.0 ile 1.0 arasında)
+        autoplay: false // Otomatik başlamasın, biz kontrol edelim
       });
 
       AFRAME.registerComponent("mytarget", {
         init: function () {
-          const el = this.el;
+          const el = this.el; // Hedef entity'yi (mytarget) temsil eder
 
           el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı! Model görünür olmalı.");
+
+            // Howler.js sesini başlat
             if (backgroundMusic && !backgroundMusic.playing()) {
                 backgroundMusic.play();
                 console.log("Howler.js sesi oynatılıyor.");
@@ -65,6 +37,8 @@
 
           el.addEventListener("targetLost", (event) => {
             console.log("AR Hedefi kaybedildi! Model gizleniyor.");
+
+            // Howler.js sesini durdur
             if (backgroundMusic && backgroundMusic.playing()) {
                 backgroundMusic.pause();
                 console.log("Howler.js sesi durduruldu.");
@@ -72,136 +46,13 @@
           });
         },
       });
-
-      // *** Fotoğraf çekme fonksiyonu ***
-      async function takeScreenshot() {
-        console.log("AR fotoğrafı çekiliyor...");
-
-        const sceneEl = document.querySelector('a-scene');
-        if (!sceneEl) {
-          console.error("A-Frame sahnesi bulunamadı.");
-          alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
-          return;
-        }
-
-        const videoElement = document.querySelector('video');
-        if (!videoElement || videoElement.readyState < 2) {
-          console.error("Kamera video elementi bulunamadı veya hazır değil.");
-          alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
-          return;
-        }
-
-        const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
-        if (!arWebGLCanvas) {
-          console.error("A-Frame render canvas'ı bulunamadı.");
-          alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
-          return;
-        }
-
-        try {
-          // Videoyu duraklat (Senkronizasyon için önemli)
-          videoElement.pause();
-
-          // Geçici canvas oluştur
-          const combinedCanvas = document.createElement("canvas");
-          
-          // *** BURASI GÜNCELLENDİ: Çözünürlük ve boyutlandırma ***
-          let captureWidth = videoElement.videoWidth;
-          let captureHeight = videoElement.videoHeight;
-
-          if (captureWidth === 0 || captureHeight === 0) {
-              console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
-              captureWidth = window.innerWidth;
-              captureHeight = window.innerHeight;
-          }
-
-          // Çözünürlüğü artırmak için bir çarpan kullan (örn. 2x)
-          const resolutionMultiplier = 2; // Bu değeri deneyerek istediğiniz çözünürlüğü bulun
-
-          combinedCanvas.width = captureWidth * resolutionMultiplier;
-          combinedCanvas.height = captureHeight * resolutionMultiplier;
-
-          const ctx = combinedCanvas.getContext('2d');
-
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-
-          // 1. Videoyu canvas'a çiz
-          ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
-
-          // 2. A-Frame'in 3D modelini içeren canvas'ı al
-          let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
-
-          if (!arCanvasForScreenshot) {
-              console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
-              alert("Fotoğraf çekilemedi: 3D model katmanı bulunamadı.");
-              return;
-          }
-
-          // 3. 3D modeli içeren canvas'ı, video görüntüsünün üzerine çiz
-          ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
-          
-          const screenshotDataURL = combinedCanvas.toDataURL('image/png');
-
-          if (screenshotDataURL === 'data:,') {
-            console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
-            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
-            return;
-          }
-
-          const link = document.createElement('a');
-          link.href = screenshotDataURL;
-          link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
-
-        } catch (error) {
-          console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
-          alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
-        } finally {
-            if (videoElement.paused) {
-                videoElement.play();
-            }
-        }
-      }
-
-      // *** BURASI YENİ EKLENDİ: Ekran döndürme ve boyutlandırma yönetimi ***
-      window.addEventListener('orientationchange', () => {
-          console.log('Ekran yönü değişti, sahne güncelleniyor.');
-          // A-Frame sahnesini ve renderer'ı güncellemek için bir gecikme eklemek iyi bir pratik olabilir.
-          // Çünkü döndürme işlemi hemen bitmeyebilir.
-          setTimeout(() => {
-              const sceneEl = document.querySelector('a-scene');
-              if (sceneEl && sceneEl.resize) {
-                  sceneEl.resize(); // A-Frame'in boyutlandırma metodunu çağır
-              }
-              // MindAR'ın kendi içinde de bir yeniden boyutlandırma mekanizması olabilir,
-              // genellikle bu olayları dinler ve kendini ayarlar.
-          }, 500); // 500ms gecikme
-      });
-
-      // window.resize olayını da dinleyebiliriz (mobil ve masaüstü için)
-      window.addEventListener('resize', () => {
-          console.log('Pencere boyutu değişti, sahne güncelleniyor.');
-          setTimeout(() => {
-              const sceneEl = document.querySelector('a-scene');
-              if (sceneEl && sceneEl.resize) {
-                  sceneEl.resize();
-              }
-          }, 500);
-      });
-
     </script>
   </head>
   <body>
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
-      vr-mode-ui="enabled: false"
-      **device-orientation-permission-ui="enabled: true"** webgl-renderer="preserveDrawingBuffer: true;" 
-      screenshot="" > 
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001" vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
@@ -216,11 +67,8 @@
           scale="0.5 0.5 0.5"
           src="#avatarModel"
           animation-mixer="timeScale: 1">
-        </a-gltf-model>
+		  </a-gltf-model>
       </a-entity>
     </a-scene>
-
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
-
   </body>
 </html>
