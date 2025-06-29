@@ -5,85 +5,82 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+        background: #f9f9f9;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      #ekranAlBtn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 999;
+        padding: 10px 15px;
+        font-size: 16px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+    </style>
+
     <script>
-      // Howler.js ses nesnesini global olarak bir kez tanımla
+      // Howler.js ses nesnesi
       var backgroundMusic = new Howl({
-        src: ['https://coskun7760.github.io/webAr1/ses.mp3'], // Senin ses dosyan
-        // loop: true, // Müziğin döngüde çalmasını sağlar
-        volume: 1.0, // Ses seviyesini ayarla (0.0 ile 1.0 arasında)
-        autoplay: false // Otomatik başlamasın, biz kontrol edelim
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
+        volume: 1.0,
+        autoplay: false
       });
 
       AFRAME.registerComponent("mytarget", {
         init: function () {
-          const el = this.el; // Hedef entity'yi (mytarget) temsil eder
+          const el = this.el;
 
-          el.addEventListener("targetFound", (event) => {
-            console.log("AR Hedefi algılandı! Model görünür olmalı.");
-
-            // Howler.js sesini başlat
-            if (backgroundMusic && !backgroundMusic.playing()) {
-                backgroundMusic.play();
-                console.log("Howler.js sesi oynatılıyor.");
-            } else if (backgroundMusic && backgroundMusic.playing()) {
-                console.log("Howler.js sesi zaten çalıyor.");
-            } else {
-                console.warn("Howler.js sesi başlatılamadı.");
+          el.addEventListener("targetFound", () => {
+            console.log("AR Hedefi algılandı!");
+            if (!backgroundMusic.playing()) {
+              backgroundMusic.play();
             }
           });
 
-          el.addEventListener("targetLost", (event) => {
-            console.log("AR Hedefi kaybedildi! Model gizleniyor.");
-
-            // Howler.js sesini durdur
-            if (backgroundMusic && backgroundMusic.playing()) {
-                backgroundMusic.pause();
-                console.log("Howler.js sesi durduruldu.");
+          el.addEventListener("targetLost", () => {
+            console.log("AR Hedefi kaybedildi!");
+            if (backgroundMusic.playing()) {
+              backgroundMusic.pause();
             }
           });
         },
       });
-    </script>
-	   <script>
-    function tumSayfayiCek() {
-      html2canvas(document.body, {
-        useCORS: true,
-        scrollY: -window.scrollY, // Sayfa kaydırmasını sıfırlamak için
-        windowWidth: document.body.scrollWidth,
-        windowHeight: document.body.scrollHeight
-      }).then(canvas => {
+
+      function sahneGoruntusuAl() {
+        const scene = document.querySelector("a-scene");
+
+        // render edilmiş canvas'ı al
+        const canvas = scene.renderer.domElement;
+
         // Görüntüyü indir
-        canvas.toBlob(function(blob) {
-          const link = document.createElement('a');
-          link.download = "tum-sayfa-goruntusu.png";
-          link.href = URL.createObjectURL(blob);
-          link.click();
-        });
-      });
-    }
-  </script>
-	  
-	  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: #f9f9f9;
-    }
-    .bolum {
-      height: 800px;
-      margin-bottom: 20px;
-      background-color: #e0e0e0;
-      padding: 10px;
-    }
-  </style>
+        const imageData = canvas.toDataURL("image/png");
+
+        const link = document.createElement("a");
+        link.href = imageData;
+        link.download = "aframe-ekran-goruntusu.png";
+        link.click();
+      }
+    </script>
   </head>
+
   <body>
-	   <button onclick="tumSayfayiCek()">Tüm Sayfanın Ekran Görüntüsü</button>
+    <button id="ekranAlBtn" onclick="sahneGoruntusuAl()">Sahne Görüntüsü Al</button>
+
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001" vr-mode-ui="enabled: false"
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
+      vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
     >
       <a-assets>
@@ -100,13 +97,8 @@
           scale="0.5 0.5 0.5"
           src="#avatarModel"
           animation-mixer="timeScale: 1">
-		  </a-gltf-model>
+        </a-gltf-model>
       </a-entity>
-		
     </a-scene>
-	  
-	 
-
- 
   </body>
 </html>
