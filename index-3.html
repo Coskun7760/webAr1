@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+
+    <style>
+      /* Butonlar için genel stil */
+      .control-button {
+        position: fixed;
+        bottom: 20px;
+        padding: 15px 30px;
+        font-size: 1.2em;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: background-color 0.3s ease;
+      }
+
+      .capture-button {
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #4CAF50; /* Yeşil */
+      }
+      .capture-button:hover {
+        background-color: #45a049;
+      }
+
+      .reset-button {
+        left: 20px; /* Sol tarafa konumlandır */
+        background-color: #f44336; /* Kırmızı */
+      }
+      .reset-button:hover {
+        background-color: #da190b;
+      }
+
+      /* MindAR tarafından oluşturulan video elemanını bulmak için yardımcı stil */
+      video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    </style>
+
+    <script>
+      var backgroundMusic = new Howl({
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
+        volume: 1.0,
+        autoplay: false
+      });
+
+      // *** Global değişken: O an aktif olan (görünür) modelin a-entity'sini tutar ***
+      // Tek bir hedef olduğu için mytarget bileşeninin el'ini tutabiliriz.
+      let currentActiveTargetEntity = null;
+
+      AFRAME.registerComponent("mytarget", {
+        init: function () {
+          const el = this.el; // Bu, targetIndex: 0 olan a-entity
+
+          el.addEventListener("targetFound", () => {
+            console.log("AR Hedefi algılandı! Model ekranda görünüyor.");
+            // Hedef bulunduğunda bu a-entity'yi aktif olarak işaretle
+            currentActiveTargetEntity = el;
+
+            if (backgroundMusic && !backgroundMusic.playing()) {
+                backgroundMusic.play();
+                console.log("Howler.js sesi oynatılıyor.");
+            }
+          });
+
+          el.addEventListener("targetLost", () => {
+            console.log("AR Hedefi kaybedildi! Model ekranda kalmaya devam ediyor.");
+            // dontStartStop: true olduğu için burada modeli gizlemeye gerek yok.
+            // Sadece sesin durmasını istersen buraya ekleyebilirsin,
+            // ancak sıfırlama butonuyla tam kontrol daha iyi olabilir.
+          });
+        },
+      });
+
+      // *** Fotoğraf çekme fonksiyonu ***
+      async function takeScreenshot() {
+        console.log("AR fotoğrafı çekiliyor...");
+
+        const sceneEl = document.querySelector('a-scene');
+        if (!sceneEl) {
+          console.error("A-Frame sahnesi bulunamadı.");
+          alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
+          return;
+        }
+
+        const videoElement = document.querySelector('video');
+        if (!videoElement || videoElement.readyState < 2) {
+          console.error("Kamera video elementi bulunamadı veya hazır değil.");
+          alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
