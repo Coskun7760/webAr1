@@ -50,9 +50,16 @@
       AFRAME.registerComponent("mytarget", {
         init: function () {
           const el = this.el;
+          // *** YENİ: Hedefin daha önce algılanıp algılanmadığını takip eden bayrak ***
+          this.targetFoundOnce = false; 
 
           el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı! Model görünür olmalı.");
+            // *** YENİ: Hedef bir kez algılandı olarak işaretle ***
+            this.targetFoundOnce = true; 
+            // *** YENİ: Modeli görünür yap (MindAR varsayılan olarak gizlerse, bu önemli) ***
+            el.setAttribute('visible', true);
+
             if (backgroundMusic && !backgroundMusic.playing()) {
                 backgroundMusic.play();
                 console.log("Howler.js sesi oynatılıyor.");
@@ -64,16 +71,24 @@
           });
 
           el.addEventListener("targetLost", (event) => {
-            console.log("AR Hedefi kaybedildi! Model gizleniyor.");
-            if (backgroundMusic && backgroundMusic.playing()) {
-                backgroundMusic.pause();
-                console.log("Howler.js sesi durduruldu.");
+            console.log("AR Hedefi kaybedildi!");
+            // *** YENİ: Hedef daha önce algılandıysa, modeli ve müziği ekranda tut ***
+            if (this.targetFoundOnce) {
+              console.log("Hedef daha önce algılandığı için model ekranda kalmaya devam ediyor.");
+              // Modeli gizlemek yerine visible kalmasını sağlıyoruz.
+              el.setAttribute('visible', true); 
+              // Müziğin de devam etmesini istiyoruz, bu yüzden burada durdurmuyoruz.
+            } else {
+              console.log("Hedef hiç algılanmadığı için model gizli kalıyor.");
+              // Eğer hedef hiç bulunmadıysa ve kaybolduysa, varsayılan olarak görünmez kalır.
+              // Bu satır aslında gereksiz olabilir çünkü varsayılan davranış budur.
+              el.setAttribute('visible', false);
             }
           });
         },
       });
 
-      // *** Fotoğraf çekme fonksiyonu - DAHA YÜKSEK ÇÖZÜNÜRLÜK İÇİN GÜNCELLENDİ ***
+      // *** Fotoğraf çekme fonksiyonu - AYNI KALDI ***
       async function takeScreenshot() {
         console.log("AR fotoğrafı çekiliyor...");
 
@@ -118,9 +133,7 @@
           }
 
           // Çözünürlüğü artırmak için bir çarpan kullan (örneğin 2x, 3x)
-          // `window.devicePixelRatio` da kullanılabilir ancak bazı cihazlarda çok yüksek değerler verebilir.
-          const resolutionMultiplier = 2; // Bu değeri deneyerek istediğiniz çözünürlüğü bulun
-                                          // Örneğin 1.5, 2, 3 gibi değerler deneyebilirsiniz.
+          const resolutionMultiplier = 2; 
 
           combinedCanvas.width = captureWidth * resolutionMultiplier;
           combinedCanvas.height = captureHeight * resolutionMultiplier;
@@ -178,6 +191,19 @@
             }
         }
       }
+
+      // *** YENİ FONKSİYON: AR sahnesini sıfırlama ve hedef arama moduna dönme ***
+      function resetARScene() {
+          console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
+          // Sayfayı yeniden yüklemek, tüm AR bileşenlerini ve MindAR'ı sıfırlamanın en güvenilir yoludur.
+          location.reload(); 
+          
+          // Eğer müzik çalıyorsa, sayfayı yeniden yüklemeden önce durdurmak iyi bir pratiktir.
+          if (backgroundMusic && backgroundMusic.playing()) {
+              backgroundMusic.stop();
+              console.log("Howler.js sesi durduruldu.");
+          }
+      }
     </script>
   </head>
   <body>
@@ -185,7 +211,7 @@
       mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: true"
-      webgl-renderer="preserveDrawingBuffer: true;" 
+      webgl-renderer="preserveDrawingBuffer: true;"  
       screenshot="" > 
       <a-assets>
         <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
@@ -200,12 +226,13 @@
           position="0 -0.5 0.1"
           scale="0.5 0.5 0.5"
           src="#avatarModel"
-          animation-mixer="timeScale: 1"> 
+          animation-mixer="timeScale: 1">  
         </a-gltf-model>
       </a-entity>
     </a-scene>
 
     <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
+    <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
 </html>
