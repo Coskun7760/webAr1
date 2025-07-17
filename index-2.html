@@ -5,30 +5,41 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
 
     <style>
-      /* Butonu AR sahnesinin üzerinde konumlandırmak için stil */
-      .capture-button {
+      /* Butonlar için genel stil */
+      .control-button {
         position: fixed;
         bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
         padding: 15px 30px;
         font-size: 1.2em;
-        background-color: #4CAF50; /* Yeşil */
         color: white;
         border: none;
         border-radius: 8px;
         cursor: pointer;
-        z-index: 1000; /* AR sahnesinin üzerinde görünmesi için */
+        z-index: 1000;
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         transition: background-color 0.3s ease;
+      }
+
+      .capture-button {
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #4CAF50; /* Yeşil */
       }
       .capture-button:hover {
         background-color: #45a049;
       }
+
+      .reset-button { /* Yeni buton için stil */
+        left: 20px;
+        background-color: #f44336; /* Kırmızı */
+      }
+      .reset-button:hover {
+        background-color: #da190b;
+      }
+
       /* MindAR tarafından oluşturulan video elemanını bulmak için yardımcı stil */
       video {
         position: absolute;
@@ -64,11 +75,14 @@
           });
 
           el.addEventListener("targetLost", (event) => {
-            console.log("AR Hedefi kaybedildi! Model gizleniyor.");
-            if (backgroundMusic && backgroundMusic.playing()) {
-                backgroundMusic.pause();
-                console.log("Howler.js sesi durduruldu.");
-            }
+            console.log("AR Hedefi kaybedildi! Model ekranda kalmaya devam ediyor.");
+            // dontStartStop: true olduğu için model otomatik gizlenmiyor.
+            // Sesin durmasını istiyorsan buraya ekleyebilirsin,
+            // ancak butona basınca sıfırlanacağı için burada müdahaleye gerek kalmayabilir.
+            // if (backgroundMusic && backgroundMusic.playing()) {
+            //     backgroundMusic.pause();
+            //     console.log("Howler.js sesi durduruldu.");
+            // }
           });
         },
       });
@@ -105,37 +119,26 @@
           // Geçici canvas oluştur
           const combinedCanvas = document.createElement("canvas");
           
-          // *** BURASI GÜNCELLENDİ: Daha yüksek çözünürlük için strateji ***
           let captureWidth = videoElement.videoWidth;
           let captureHeight = videoElement.videoHeight;
 
-          // Eğer videoWidth ve videoHeight geçerli değerlerse, bunları kullan.
-          // Aksi takdirde (örn. video henüz yüklenmediyse), window.innerWidth/Height kullan.
           if (captureWidth === 0 || captureHeight === 0) {
               console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
               captureWidth = window.innerWidth;
               captureHeight = window.innerHeight;
           }
 
-          // Çözünürlüğü artırmak için bir çarpan kullan (örneğin 2x, 3x)
-          // `window.devicePixelRatio` da kullanılabilir ancak bazı cihazlarda çok yüksek değerler verebilir.
           const resolutionMultiplier = 2; // Bu değeri deneyerek istediğiniz çözünürlüğü bulun
-                                          // Örneğin 1.5, 2, 3 gibi değerler deneyebilirsiniz.
-
           combinedCanvas.width = captureWidth * resolutionMultiplier;
           combinedCanvas.height = captureHeight * resolutionMultiplier;
 
           const ctx = combinedCanvas.getContext('2d');
 
-          // Çizim kalitesini artır (sadece desteklenen tarayıcılarda)
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
 
-          // 1. Videoyu canvas'a çiz
-          // Canvas'ın yeni, yüksek çözünürlüklü boyutlarına ölçekle
           ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
 
-          // 2. A-Frame'in 3D modelini içeren canvas'ı al
           let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
 
           if (!arCanvasForScreenshot) {
@@ -144,21 +147,16 @@
               return;
           }
 
-          // 3. 3D modeli içeren canvas'ı, video görüntüsünün üzerine çiz
-          // 3D canvas'ını da yeni, yüksek çözünürlüklü boyutlara ölçekle
           ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
           
-          // Birleşik canvas'tan veri URL'sini al
           const screenshotDataURL = combinedCanvas.toDataURL('image/png');
 
-          // Eğer veri URL'si boş veya geçersiz ise uyarı ver
           if (screenshotDataURL === 'data:,') {
             console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
             alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
             return;
           }
 
-          // İndirme linkini oluştur ve tıkla
           const link = document.createElement('a');
           link.href = screenshotDataURL;
           link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
@@ -172,19 +170,58 @@
           console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
           alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
         } finally {
-            // Video duraklatıldıysa tekrar oynat
             if (videoElement.paused) {
                 videoElement.play();
             }
         }
       }
+
+      // *** YENİ FONKSİYON: AR deneyimini sıfırlar ve hedef aramaya döner ***
+      function resetARExperience() {
+          const sceneEl = document.querySelector('a-scene');
+          if (sceneEl && sceneEl.components['mindar-image']) {
+              console.log("AR deneyimi sıfırlanıyor...");
+              // MindAR'ı durdur (modeli ve kamerayı temizler)
+              sceneEl.components['mindar-image'].stop();
+              // Müziği durdur (eğer çalıyorsa)
+              if (backgroundMusic && backgroundMusic.playing()) {
+                  backgroundMusic.stop();
+              }
+              // MindAR'ı tekrar başlat (hedef aramaya geri döner)
+              sceneEl.components['mindar-image'].start();
+              console.log("AR deneyimi sıfırlandı ve hedef aramaya dönüldü.");
+          } else {
+              console.warn("MindAR sahnesi bulunamadı veya başlatılamadı.");
+          }
+      }
+
+      // Ekran döndürme ve boyutlandırma yönetimi
+      window.addEventListener('orientationchange', () => {
+          console.log('Ekran yönü değişti, sahne güncelleniyor.');
+          setTimeout(() => {
+              const sceneEl = document.querySelector('a-scene');
+              if (sceneEl && sceneEl.resize) {
+                  sceneEl.resize();
+              }
+          }, 500); 
+      });
+
+      window.addEventListener('resize', () => {
+          console.log('Pencere boyutu değişti, sahne güncelleniyor.');
+          setTimeout(() => {
+              const sceneEl = document.querySelector('a-scene');
+              if (sceneEl && sceneEl.resize) {
+                  sceneEl.resize();
+              }
+          }, 500);
+      });
+
     </script>
   </head>
   <body>
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: true"
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001; **dontStartStop: true; uiLoading: false;**" vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: true" 
       webgl-renderer="preserveDrawingBuffer: true;" 
       screenshot="" > 
       <a-assets>
@@ -201,11 +238,11 @@
           scale="0.5 0.5 0.5"
           src="#avatarModel"
           animation-mixer="timeScale: 1"> 
-        </a-gltf-model>
+          </a-gltf-model>
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
+    <button class="control-button reset-button" onclick="resetARExperience()">AR'ı Sıfırla</button> <button class="control-button capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
 
   </body>
 </html>
