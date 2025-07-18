@@ -41,7 +41,7 @@
       /* --- KRİTİK DEĞİŞİKLİK: MindAR'ın hedef arama UI'ını başlangıçta tamamen gizle --- */
       /* MindAR, genellikle bu sınıfı kullanarak arama karesini çizer. */
       .mindar-ui-overlay {
-          display: none !important; /* !important ile tüm diğer stilleri geçersiz kıl */
+          display: block !important; /* !important ile tüm diğer stilleri geçersiz kıl */
       }
       /* İsteğe bağlı: "Yükleniyor..." ekranını da gizlemek istersen */
       .a-loader-title, .a-loader-bg {
@@ -120,10 +120,10 @@
             animatedModel.setAttribute('visible', true);
 
             // --- YENİ EKLEME: Hedef bulunduğunda MindAR'ın arama UI'ını görünür yap ---
-            if (mindarUiOverlay) {
+          /* if (mindarUiOverlay) {
                 mindarUiOverlay.style.display = 'block';
                 console.log("MindAR arama UI'ı görünür yapıldı (targetFound).");
-            }
+            } */
           });
 
           // Hedef kaybedildiğinde
