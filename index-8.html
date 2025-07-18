@@ -85,7 +85,7 @@
           // Hedef bulunduğunda
           el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
-			// mindarImageComponent.data.uiScanning = false; // yeni
+
             // Modeli görünür yap
             animatedModel.setAttribute('visible', true);
 
@@ -121,7 +121,7 @@
             // MindAR'ın kendi uiScanning özelliğini kullanıyoruz.
             if (mindarImageComponent) {
                 // Sadece uiScanning'i true yapıp bileşeni güncelliyoruz.
-               // mindarImageComponent.data.uiScanning = true;
+                mindarImageComponent.data.uiScanning = true;
                 sceneEl.setAttribute('mindar-image', mindarImageComponent.data); 
                 console.log("MindAR arama UI'ı görünür yapıldı (targetFound).");
             }
@@ -162,7 +162,7 @@
             // MindAR'ın kendi uiScanning özelliğini kullanıyoruz.
             if (mindarImageComponent) {
                 // Sadece uiScanning'i false yapıp bileşeni güncelliyoruz.
-                // mindarImageComponent.data.uiScanning = false;
+               // mindarImageComponent.data.uiScanning = false;
                 sceneEl.setAttribute('mindar-image', mindarImageComponent.data);
                 console.log("MindAR arama UI'ı gizlendi (targetLost).");
             }
@@ -295,7 +295,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf  İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çak Çak İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
