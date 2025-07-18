@@ -39,8 +39,14 @@
         object-fit: cover;
       }
 
-      /* Önceki gizleme CSS'ini kaldırdık */
-
+      /* MindAR'ın varsayılan "Yükleniyor" UI'ını gizlemek için (isteğe bağlı) */
+      /* Eğer bir "Yükleniyor..." yazısı görüyorsan bu stilleri kaldırabilirsin */
+      .a-loader-title {
+          display: none !important;
+      }
+      .a-loader-bg {
+          display: none !important;
+      }
     </style>
 
     <script>
@@ -62,27 +68,20 @@
           const sceneEl = document.querySelector('a-scene');
           const animatedModel = document.querySelector('#animatedModel');
 
-          // MindAR'ın çizim yaptığı canvas elementini bulalım.
-          // Genellikle MindAR, A-Frame sahnesinin altındaki ilk canvas'ı kullanır.
-          // Eğer bu çalışmazsa, tarayıcı geliştirici araçlarından (F12) doğru canvas'ın ID'sini/sınıfını bulmak gerekebilir.
-          let mindarCanvas = null;
+          // sceneEl'in mindar-image bileşenine doğrudan erişim
+          // Bu, uiScanning özelliğini kontrol etmek için kullanılacak.
+          let mindarImageComponent = null;
+
+          // A-Frame sahnesi yüklendiğinde mindar-image bileşenine erişelim
           sceneEl.addEventListener('loaded', () => {
-              // Scene yüklendiğinde MindAR canvas'ını bulmaya çalış
-              // MindAR'ın UI'ı genellikle özel bir CSS sınıfı ile gelir (örn: mindar-ui-canvas).
-              // Veya doğrudan <a-scene> altındaki ilk canvas olabilir.
-              mindarCanvas = document.querySelector('canvas.a-canvas'); // Genellikle A-Frame'in ana canvas'ı
-              if (!mindarCanvas) {
-                // Eğer üstteki bulunamazsa, MindAR'ın spesifik bir canvas'ı olabilir.
-                // Bu kısmı tarayıcı geliştirici araçlarından kontrol etmek gerekebilir.
-                // Örneğin: mindarCanvas = document.querySelector('.mindar-ui-overlay');
-                // Veya özel bir ID'si varsa: mindarCanvas = document.getElementById('mindar-render-canvas');
-                console.warn("MindAR'ın arama UI canvas'ı doğrudan bulunamadı. Görünürlük kontrolü etkili olmayabilir.");
+              mindarImageComponent = sceneEl.components['mindar-image'];
+              if (mindarImageComponent) {
+                  console.log("MindAR Image bileşeni yüklendi.");
               } else {
-                console.log("MindAR'ın ana canvas'ı bulundu:", mindarCanvas);
+                  console.warn("MindAR Image bileşeni bulunamadı.");
               }
           });
           
-
           // Hedef bulunduğunda
           el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
@@ -116,13 +115,15 @@
                 animatedModel.setAttribute('scale', '0.5 0.5 0.5');
 
                 isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
+            }
 
-                // *** YENİ EKLEME: Hedef bulunduğunda MindAR'ın canvas'ını tekrar görünür yap ***
-                // MindAR zaten arka planda çalışıyor olacak, sadece UI'ı gösteriyoruz.
-                if (mindarCanvas) {
-                    mindarCanvas.style.display = 'block'; // Veya 'initial', 'unset' gibi
-                    console.log("MindAR canvas görünür yapıldı (hedef bulundu).");
-                }
+            // *** BURADA DİKKAT: Hedef bulunduğunda arama UI'ını göster ***
+            // MindAR'ın kendi uiScanning özelliğini kullanıyoruz.
+            if (mindarImageComponent) {
+                // Sadece uiScanning'i true yapıp bileşeni güncelliyoruz.
+                mindarImageComponent.data.uiScanning = true;
+                sceneEl.setAttribute('mindar-image', mindarImageComponent.data); 
+                console.log("MindAR arama UI'ı görünür yapıldı (targetFound).");
             }
           });
 
@@ -155,13 +156,15 @@
 
                 isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
                 console.log("Model sabitlendi. Konum:", animatedModel.object3D.position);
+            }
 
-                // *** YENİ EKLEME: Hedef kaybedildiğinde MindAR'ın canvas'ını gizle ***
-                // MindAR arka planda çalışmaya devam edecek ama UI gizlenecek.
-                if (mindarCanvas) {
-                    mindarCanvas.style.display = 'none';
-                    console.log("MindAR canvas gizlendi (hedef kaybedildi).");
-                }
+            // *** BURADA DİKKAT: Hedef kaybedildiğinde arama UI'ını gizle ***
+            // MindAR'ın kendi uiScanning özelliğini kullanıyoruz.
+            if (mindarImageComponent) {
+                // Sadece uiScanning'i false yapıp bileşeni güncelliyoruz.
+                mindarImageComponent.data.uiScanning = false;
+                sceneEl.setAttribute('mindar-image', mindarImageComponent.data);
+                console.log("MindAR arama UI'ı gizlendi (targetLost).");
             }
             // Müzik çalmaya devam edecek.
           });
@@ -269,7 +272,7 @@
   </head>
   <body>
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001; uiLoading: false; uiScanning: true;"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: true"
       webgl-renderer="preserveDrawingBuffer: true;"  
@@ -292,7 +295,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çakk İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çak Çak İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
