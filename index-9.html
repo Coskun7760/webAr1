@@ -45,13 +45,7 @@
       
       /* MindAR'ın kendi tarama UI'ını başlangıçta gizlemek için bu CSS kuralını kullanıyoruz.
          JavaScript ile 'hidden' sınıfını kaldırarak görünür yapacağız. */
-      .mindar-ui-overlay.mindar-ui-scanning {
-          display: none !important; /* Başlangıçta tarama animasyonunu gizle */
-      }
-      /* Sadece .mindar-ui-overlay sınıfına sahip elementler için de gizleme */
-      .mindar-ui-overlay {
-          display: none !important; /* Genel overlay'i de gizle */
-      }
+     
     </style>
 
     <script>
@@ -76,7 +70,7 @@
 
           // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
           sceneEl.addEventListener('loaded', () => {
-              mindarUiOverlay = document.querySelector('.mindar-ui-overlay');
+              mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
               if (mindarUiOverlay) {
                   console.log("MindAR UI Overlay bulundu.");
                   // Sayfa yüklendiğinde tarama UI'ını başlangıçta gizli tut.
@@ -122,12 +116,7 @@
             
             animatedModel.setAttribute('visible', true); // Modeli görünür yap
 
-            // Hedef bulunduğunda MindAR'ın arama UI'ını gizli tut
-            if (mindarUiOverlay) {
-                mindarUiOverlay.classList.add('hidden'); // hidden sınıfını ekle (eğer yoksa ekler, varsa sorun olmaz)
-                // Ayrıca CSS'teki display: none !important; kuralımız zaten devrede olacak.
-                console.log("MindAR arama UI'ı gizlendi (targetFound).");
-            }
+         
           });
 
           // Hedef kaybedildiğinde
@@ -274,7 +263,7 @@
   </head>
   <body>
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001; uiLoading: false; uiScanning: false;"
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001;"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: true"
       webgl-renderer="preserveDrawingBuffer: true;"  
