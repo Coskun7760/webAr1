@@ -68,6 +68,8 @@
               mindarImageComponent = sceneEl.components['mindar-image'];
               if (mindarImageComponent) {
                   console.log("MindAR Image bileşeni yüklendi.");
+				  mindarImageComponent.data.uiScanning = false;
+                  sceneEl.setAttribute('mindar-image', mindarImageComponent.data);
               } else {
                   console.warn("MindAR Image bileşeni bulunamadı.");
               }
@@ -149,13 +151,13 @@
 			  
 			  // *** BURADA DİKKAT: Hedef kaybedildiğinde arama UI'ını gizle ***
             // MindAR'ın kendi uiScanning özelliğini kullanıyoruz.
-            if (mindarImageComponent) {
+          /*  if (mindarImageComponent) {
                 // Sadece uiScanning'i false yapıp bileşeni güncelliyoruz.
                 mindarImageComponent.data.uiScanning = false;
                 sceneEl.setAttribute('mindar-image', mindarImageComponent.data);
                 console.log("MindAR arama UI'ı gizlendi (targetLost).");
             } 
-			  
+			*/  
 			  
             // Müzik çalmaya devam edecek, bu kısımda durdurmuyoruz.
           });
