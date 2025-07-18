@@ -39,9 +39,7 @@
       }
 
       /* Yükleniyor ekranını gizle (bu genellikle MindAR'ın ilk yüklemesinde görünür) */
-      .a-loader-title, .a-loader-bg {
-          display: none !important;
-      }
+     
       
       /* MindAR'ın kendi tarama UI'ını başlangıçta gizlemek için bu CSS kuralını kullanıyoruz.
          JavaScript ile 'hidden' sınıfını kaldırarak görünür yapacağız. */
@@ -73,6 +71,7 @@
               mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
               if (mindarUiOverlay) {
                   console.log("MindAR UI Overlay bulundu.");
+				  console.log(mindarUiOverlay);
                   // Sayfa yüklendiğinde tarama UI'ını başlangıçta gizli tut.
                   // CSS kuralımız zaten bunu yapıyor, buraya ek kod gerekmez.
                   // MindAR'ın kendi 'hidden' sınıfını manuel eklemeyeceğiz
