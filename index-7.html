@@ -38,6 +38,16 @@
         height: 100%;
         object-fit: cover;
       }
+
+      /* *** YENİ EKLEME: MindAR'ın hedef arama animasyonunu (gri kare) gizle *** */
+      .mindar-ui-overlay {
+        display: none !important;
+      }
+      /* Eğer yukarıdaki işe yaramazsa, bu da denenebilir: */
+      /* MindAR'ın kendi canvas'ı veya varsayılan UI elementleri bazen bu tür isimlerde olabilir */
+      /* .ar-camera-overlay { display: none !important; } */
+      /* #mindar-image-canvas { display: none !important; } */
+
     </style>
 
     <script>
@@ -48,11 +58,9 @@
       });
 
       // Modelin şu anda hedefe bağlı olup olmadığını takip eden bayrak
-      // Başlangıçta true, çünkü MindAR başlatıldığında model hedefe bağlıdır.
       let isModelAttachedToTarget = true; 
 
       // Modelin daha önce en az bir kez hedef tarafından algılanıp algılanmadığını takip eden bayrak.
-      // Müziği sadece bir kere başlatmak için.
       let hasTargetBeenFoundOnce = false;
 
       AFRAME.registerComponent("mytarget", {
@@ -136,11 +144,10 @@
                 isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
                 console.log("Model sabitlendi. Konum:", animatedModel.object3D.position);
 
-                // *** KRİTİK ADIM: MindAR'ın takibini ve UI'ını durdur ***
-                // Bu, hem gri kare/tarama animasyonunu kaldırır hem de MindAR'ın sürekli hedef aramasını durdurur.
+                // MindAR'ın takibini durdur. UI'ı CSS ile gizlediğimiz için ekstra bir şeye gerek kalmayacak.
                 if (sceneEl.components['mindar-image']) {
                     sceneEl.components['mindar-image'].stop(); 
-                    console.log("MindAR takibi ve hedef arama animasyonu durduruldu.");
+                    console.log("MindAR takibi durduruldu.");
                 }
             }
             // Müzik çalmaya devam edecek.
@@ -272,7 +279,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf çek çek İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
