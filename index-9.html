@@ -148,16 +148,14 @@
                 this.isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
             }
             
-            // 3. Hedef kaybolduğunda: MindAR'ın hedef arama animasyonu (o gri kare) kaybolsun.
-            // Bu biraz yanıltıcı bir istek çünkü varsayılan olarak zaten kayboluyordu.
-            // Ancak sen "kaybolsun" dediğin için, zaten gizli olanı tekrar gizleme komutu verelim.
-            // Eğer amacın "tekrar ortaya çıkmasın" ise, bu kod işe yarar.
-            // Eğer "hedef kaybolduğunda arama animasyonu görünür olsun" ise aşağıdaki satırı değiştirmen gerekir.
+            
+            
+			  
+			  // KRİTİK DÜZELTME: Hedef kaybolduğunda MindAR 'hidden' sınıfını siliyor.
+            // Bu yüzden biz devreye girip MindAR'ın UI'ını tekrar gizliyoruz.
             if (mindarUiOverlay) {
-                //mindarUiOverlay.classList.add('hidden'); // hidden sınıfını ekleyerek gizli kalmasını sağla
-                // mindarUiOverlay.setAttribute('hidden', ''); 
-				mindarUiOverlay.classList.add('hidden'); 
-				console.log("MindAR arama UI'ı gizlendi (targetLost).");
+                mindarUiOverlay.style.setProperty('display', 'none', 'important');
+                console.log("MindAR arama UI'ı hedef kaybedildiğinde JavaScript tarafından tekrar gizlendi.");
             }
             // Müzik çalmaya devam edecek, bu kısımda durdurmuyoruz.
           });
@@ -287,7 +285,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek ccc İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek ttt İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
