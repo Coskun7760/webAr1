@@ -39,14 +39,7 @@
         object-fit: cover;
       }
 
-      /* *** YENİ EKLEME: MindAR'ın hedef arama animasyonunu (gri kare) gizle *** */
-      .mindar-ui-overlay {
-        display: none !important;
-      }
-      /* Eğer yukarıdaki işe yaramazsa, bu da denenebilir: */
-      /* MindAR'ın kendi canvas'ı veya varsayılan UI elementleri bazen bu tür isimlerde olabilir */
-      /* .ar-camera-overlay { display: none !important; } */
-      /* #mindar-image-canvas { display: none !important; } */
+      /* *** ÖNCEKİ GİZLEME CSS'İNİ KALDIRDIK! Şimdi JavaScript ile kontrol edeceğiz. *** */
 
     </style>
 
@@ -69,10 +62,14 @@
           const sceneEl = document.querySelector('a-scene');
           const animatedModel = document.querySelector('#animatedModel');
 
-          // Modelin son bilinen dünya konumunu ve rotasyonunu saklamak için
-          let lastWorldPosition = new THREE.Vector3();
-          let lastWorldQuaternion = new THREE.Quaternion();
-          let lastWorldScale = new THREE.Vector3();
+          // MindAR'ın çizim yaptığı canvas elementini bulalım.
+          // Genellikle MindAR, A-Frame sahnesinin altındaki ilk canvas'ı kullanır.
+          // Eğer bu çalışmazsa, tarayıcı geliştirici araçlarından (F12) doğru canvas'ın ID'sini/sınıfını bulmak gerekebilir.
+          const mindarCanvas = sceneEl.querySelector('canvas'); 
+          if (!mindarCanvas) {
+            console.warn("MindAR'ın canvas elementi bulunamadı. Hedef arama UI'ını kontrol etmek mümkün olmayabilir.");
+          }
+
 
           // Hedef bulunduğunda
           el.addEventListener("targetFound", (event) => {
@@ -109,10 +106,15 @@
                 isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
 
                 // MindAR'ı yeniden başlat (eğer durdurulmuşsa)
-                // Bu, MindAR'ın takibi ve hedef aramasını yeniden etkinleştirir.
                 if (sceneEl.components['mindar-image'].status === 'stopped') {
                     sceneEl.components['mindar-image'].start();
                     console.log("MindAR takibi yeniden başlatıldı.");
+                }
+
+                // *** YENİ EKLEME: Hedef bulunduğunda MindAR'ın canvas'ını tekrar görünür yap ***
+                if (mindarCanvas) {
+                    mindarCanvas.style.display = 'block'; // Veya 'initial', 'unset' gibi
+                    console.log("MindAR canvas görünür yapıldı.");
                 }
             }
           });
@@ -126,9 +128,12 @@
                 console.log("Model sahneye sabitleniyor.");
 
                 // Modelin o anki dünya konumunu, rotasyonunu ve ölçeğini al
-                animatedModel.object3D.getWorldPosition(lastWorldPosition);
-                animatedModel.object3D.getWorldQuaternion(lastWorldQuaternion);
-                animatedModel.object3D.getWorldScale(lastWorldScale); // Ölçeği de al
+                const currentWorldPos = new THREE.Vector3();
+                animatedModel.object3D.getWorldPosition(currentWorldPos);
+                const currentWorldRot = new THREE.Quaternion();
+                animatedModel.object3D.getWorldQuaternion(currentWorldRot);
+                const currentWorldScale = new THREE.Vector3();
+                animatedModel.object3D.getWorldScale(currentWorldScale); 
 
                 // Modeli hedeften kaldır
                 el.object3D.remove(animatedModel.object3D);
@@ -137,17 +142,23 @@
                 sceneEl.object3D.add(animatedModel.object3D);
 
                 // Modelin dünya pozisyonunu, rotasyonunu ve ölçeğini korumak için doğrudan atama yap
-                animatedModel.object3D.position.copy(lastWorldPosition);
-                animatedModel.object3D.quaternion.copy(lastWorldQuaternion);
-                animatedModel.object3D.scale.copy(lastWorldScale);
+                animatedModel.object3D.position.copy(currentWorldPos);
+                animatedModel.object3D.quaternion.copy(currentWorldRot);
+                animatedModel.object3D.scale.copy(currentWorldScale);
 
                 isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
                 console.log("Model sabitlendi. Konum:", animatedModel.object3D.position);
 
-                // MindAR'ın takibini durdur. UI'ı CSS ile gizlediğimiz için ekstra bir şeye gerek kalmayacak.
+                // MindAR'ın takibini durdur.
                 if (sceneEl.components['mindar-image']) {
                     sceneEl.components['mindar-image'].stop(); 
                     console.log("MindAR takibi durduruldu.");
+                }
+
+                // *** YENİ EKLEME: Hedef kaybedildiğinde MindAR'ın canvas'ını gizle ***
+                if (mindarCanvas) {
+                    mindarCanvas.style.display = 'none';
+                    console.log("MindAR canvas gizlendi.");
                 }
             }
             // Müzik çalmaya devam edecek.
@@ -279,7 +290,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
