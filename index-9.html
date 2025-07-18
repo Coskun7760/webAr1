@@ -58,6 +58,22 @@
           // *** YENİ: Modelin şu anda hedefin içinde mi yoksa sahneye sabitlenmiş mi olduğunu gösteren bayrak ***
           this.isModelAttachedToTarget = true;
 
+			
+		  // sceneEl'in mindar-image bileşenine doğrudan erişim
+          // Bu, uiScanning özelliğini kontrol etmek için kullanılacak.
+          let mindarImageComponent = null;
+
+          // A-Frame sahnesi yüklendiğinde mindar-image bileşenine erişelim
+          sceneEl.addEventListener('loaded', () => {
+              mindarImageComponent = sceneEl.components['mindar-image'];
+              if (mindarImageComponent) {
+                  console.log("MindAR Image bileşeni yüklendi.");
+              } else {
+                  console.warn("MindAR Image bileşeni bulunamadı.");
+              }
+          });		
+			
+		
           // Hedef bulunduğunda
           el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
@@ -104,7 +120,7 @@
 
           // Hedef kaybedildiğinde
           el.addEventListener("targetLost", (event) => {
-            console.log("AR Hedefi kaybedildi!");
+            console.log("AR Hedefi kaybedildi!"); // bura1
 
             // *** YENİ: Hedef daha önce algılandıysa ve model hala hedefe bağlıysa, sahneye taşı ***
             if (this.targetFoundOnce && this.isModelAttachedToTarget) {
@@ -130,6 +146,17 @@
 
                 this.isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
             }
+			  
+			  // *** BURADA DİKKAT: Hedef kaybedildiğinde arama UI'ını gizle ***
+            // MindAR'ın kendi uiScanning özelliğini kullanıyoruz.
+            if (mindarImageComponent) {
+                // Sadece uiScanning'i false yapıp bileşeni güncelliyoruz.
+                mindarImageComponent.data.uiScanning = false;
+                sceneEl.setAttribute('mindar-image', mindarImageComponent.data);
+                console.log("MindAR arama UI'ı gizlendi (targetLost).");
+            } 
+			  
+			  
             // Müzik çalmaya devam edecek, bu kısımda durdurmuyoruz.
           });
         },

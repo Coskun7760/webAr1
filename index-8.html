@@ -38,6 +38,15 @@
         height: 100%;
         object-fit: cover;
       }
+
+      /* MindAR'ın varsayılan "Yükleniyor" UI'ını gizlemek için (isteğe bağlı) */
+      /* Eğer bir "Yükleniyor..." yazısı görüyorsan bu stilleri kaldırabilirsin */
+      .a-loader-title {
+          display: none !important;
+      }
+      .a-loader-bg {
+          display: none !important;
+      }
     </style>
 
     <script>
@@ -47,19 +56,32 @@
         autoplay: false
       });
 
-      // *** YENİ BİR GLOBAL BAYRAK: Modelin sabitlenmiş olup olmadığını takip eder ***
-      let isModelLocked = false; 
+      // Modelin şu anda hedefe bağlı olup olmadığını takip eden bayrak
+      let isModelAttachedToTarget = true; 
+
+      // Modelin daha önce en az bir kez hedef tarafından algılanıp algılanmadığını takip eden bayrak.
+      let hasTargetBeenFoundOnce = false;
 
       AFRAME.registerComponent("mytarget", {
         init: function () {
           const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
-          const animatedModel = document.querySelector('#animatedModel');
           const sceneEl = document.querySelector('a-scene');
+          const animatedModel = document.querySelector('#animatedModel');
 
-          // *** YENİ: Modelin son bilinen dünya konumunu ve rotasyonunu saklamak için ***
-          let lastWorldPosition = new THREE.Vector3();
-          let lastWorldQuaternion = new THREE.Quaternion();
+          // sceneEl'in mindar-image bileşenine doğrudan erişim
+          // Bu, uiScanning özelliğini kontrol etmek için kullanılacak.
+          let mindarImageComponent = null;
 
+          // A-Frame sahnesi yüklendiğinde mindar-image bileşenine erişelim
+          sceneEl.addEventListener('loaded', () => {
+              mindarImageComponent = sceneEl.components['mindar-image'];
+              if (mindarImageComponent) {
+                  console.log("MindAR Image bileşeni yüklendi.");
+              } else {
+                  console.warn("MindAR Image bileşeni bulunamadı.");
+              }
+          });
+          
           // Hedef bulunduğunda
           el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
@@ -67,25 +89,41 @@
             // Modeli görünür yap
             animatedModel.setAttribute('visible', true);
 
-            // Müzik kontrolü (sadece ilk kez veya durdurulduysa başla)
-            if (backgroundMusic && !backgroundMusic.playing()) {
-                backgroundMusic.play();
-                console.log("Howler.js sesi oynatılıyor.");
+            // Müzik kontrolü (sadece ilk kez hedef bulunduğunda başla)
+            if (!hasTargetBeenFoundOnce) {
+                if (backgroundMusic && !backgroundMusic.playing()) {
+                    backgroundMusic.play();
+                    console.log("Howler.js sesi oynatılıyor.");
+                } else {
+                    console.log("Howler.js sesi zaten çalıyor veya başlatılamadı.");
+                }
+                hasTargetBeenFoundOnce = true;
             }
 
-            // *** YENİ: Eğer model kilitliyse, kilidi aç ve hedefe tekrar bağlan ***
-            if (isModelLocked) {
-                console.log("Modelin kilidi açılıyor ve hedefe geri bağlanıyor.");
-                // Modelin görünürlüğünü hedefe bağla (A-Frame'in varsayılanı)
-                animatedModel.setAttribute('visible', true);
+            // Eğer model sahneye sabitlenmişse (targetLost sonrası), şimdi hedefe geri ekle
+            if (!isModelAttachedToTarget) {
+                console.log("Model hedefe geri ekleniyor.");
                 
-                // Modelin pozisyonunu ve rotasyonunu hedefe göre sıfırla
-                // Bu, modelin tekrar hedefi takip etmesini sağlar.
+                // Modeli sahneden kaldır (emin olmak için)
+                sceneEl.object3D.remove(animatedModel.object3D);
+                // Modeli tekrar hedef varlığına ekle
+                el.object3D.add(animatedModel.object3D);
+
+                // Modelin pozisyonunu hedefe göre varsayılan haline getir
                 animatedModel.setAttribute('position', '0 -0.5 0.1');
-                animatedModel.setAttribute('rotation', '0 0 0'); 
+                animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
                 animatedModel.setAttribute('scale', '0.5 0.5 0.5');
 
-                isModelLocked = false; // Kilidi kapat
+                isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
+            }
+
+            // *** BURADA DİKKAT: Hedef bulunduğunda arama UI'ını göster ***
+            // MindAR'ın kendi uiScanning özelliğini kullanıyoruz.
+            if (mindarImageComponent) {
+                // Sadece uiScanning'i true yapıp bileşeni güncelliyoruz.
+                mindarImageComponent.data.uiScanning = true;
+                sceneEl.setAttribute('mindar-image', mindarImageComponent.data); 
+                console.log("MindAR arama UI'ı görünür yapıldı (targetFound).");
             }
           });
 
@@ -93,73 +131,40 @@
           el.addEventListener("targetLost", (event) => {
             console.log("AR Hedefi kaybedildi!");
 
-            // *** YENİ: Eğer model henüz kilitli değilse, kilitleme işlemini yap ***
-            // Bu kontrol, targetFoundOnce veya benzeri bir mantığın yerini alır.
-            // Sadece modelin aktif olarak takip edildiği durumdan sabitleme durumuna geçişi sağlar.
-            if (!isModelLocked) {
-                console.log("Model hedefe göre konumunu kaybediyor, sabitleme başlıyor.");
+            // Eğer model hala hedefe bağlıysa (yani ilk kez veya takip ederken kaybedildiyse)
+            if (isModelAttachedToTarget) {
+                console.log("Model sahneye sabitleniyor.");
 
-                // Modelin o anki dünya konumunu ve rotasyonunu al
-                // Bu, modelin AR hedefi üzerindeki son bilinen konumudur.
-                animatedModel.object3D.getWorldPosition(lastWorldPosition);
-                animatedModel.object3D.getWorldQuaternion(lastWorldQuaternion);
+                // Modelin o anki dünya konumunu, rotasyonunu ve ölçeğini al
+                const currentWorldPos = new THREE.Vector3();
+                animatedModel.object3D.getWorldPosition(currentWorldPos);
+                const currentWorldRot = new THREE.Quaternion();
+                animatedModel.object3D.getWorldQuaternion(currentWorldRot);
+                const currentWorldScale = new THREE.Vector3();
+                animatedModel.object3D.getWorldScale(currentWorldScale); 
 
-                // Modeli görünür tut
-                animatedModel.setAttribute('visible', true);
-
-                // *** MindAR'ın kendi `mindar-image-target` bileşenini durdurarak takibi durdur ***
-                // Bu, modelin hedefle olan bağlantısını keser ve son konumda kalmasını sağlar.
-                // Not: Bu, aynı hedefin tekrar bulunması durumunda tekrar tetiklenir ve çözülür.
-                // A-Frame, Three.js nesneleri üzerinde çalışır, bu nedenle 'object3D'ye doğrudan erişim sağlıyoruz.
-                // Modelin ebeveynini değiştirmeden pozisyon ve rotasyonu korumak için Three.js matriksleri üzerinde çalışmak gerekebilir
-                // VEYA daha basitçe, modelin bulunduğu a-entity'nin mindar-image-target bileşenini durdurmak.
+                // Modeli hedeften kaldır
+                el.object3D.remove(animatedModel.object3D);
                 
-                // Bunu yapmanın en pratik yolu, modelin kendisini artık "target" elemanının çocuğu olmaktan çıkarmaktır.
-                // Ancak bu, A-Frame'in DOM yapısını bozabilir.
-                // Alternatif ve daha güvenli yol, modelin Three.js nesnesini manuel olarak konumlandırmaktır:
-                
-                // Modelin mevcut pozisyonunu al (parent'ına göre)
-                // Sonraki adımda bunu kullanmayacağız, sadece A-Frame'in nasıl çalıştığını anlamak için.
-                // const localPos = animatedModel.object3D.position.clone();
-                // const localRot = animatedModel.object3D.quaternion.clone();
-
-                // *** Modelin bağlı olduğu MindAR hedefini (el) görünmez yap ***
-                // Bu, MindAR'ın 3D içeriği yönetmesini engeller ancak kamera akışı devam eder.
-                // Böylece modelin son konumunu koruyabiliriz.
-                el.setAttribute('visible', false); 
-
-                // Ardından modeli, scene'in doğrudan bir çocuğu gibi konumlandır
-                // Bu kritik kısım. Modeli hedeften ayırmak yerine, onu scene'in kendi koordinat sistemine taşıyoruz.
-                // animatedModel.object3D.parent.remove(animatedModel.object3D); // Bu önceki denemede sorunluydu.
-                // sceneEl.object3D.add(animatedModel.object3D); // Bu da sorunluydu.
-
-                // Doğru yöntem: Modelin pozisyonunu doğrudan dünya koordinatlarına göre güncelle
-                // Bunu yapabilmek için modelin "takip" davranışını kapatmamız lazım.
-                // MindAR'ın takip davranışını doğrudan durdurmak yerine, modelin kendisinin konumunu yönetiyoruz.
-                
-                // Eğer model MindAR hedefinin altındaysa, MindAR hedefi görünmez olduğunda model de kaybolur.
-                // Bu yüzden modelin parent'ını değiştirmek ZORUNDAYIZ.
-                // Ama bunu yaparken A-Frame'in kendi sistematiğiyle çakışmamak önemli.
-                // THREE.js dünyasında doğrudan parent'ı değiştirme:
-
-                // Modelin Three.js objesini al
-                const modelObject3D = animatedModel.object3D;
-
-                // Modeli mevcut ebeveyninden (MindAR hedefi) ayır
-                // Bu işlem modelin dünya pozisyonunu korur.
-                el.object3D.remove(modelObject3D);
-
                 // Modeli doğrudan sahneye ekle
-                sceneEl.object3D.add(modelObject3D);
+                sceneEl.object3D.add(animatedModel.object3D);
 
-                // Modelin dünya pozisyonunu ve rotasyonunu korumak için doğrudan atama yap
-                modelObject3D.position.copy(lastWorldPosition);
-                modelObject3D.quaternion.copy(lastWorldQuaternion);
-                // Ölçeği de koru
-                modelObject3D.scale.set(0.5, 0.5, 0.5); // A-Frame'deki scale ile aynı olmalı
+                // Modelin dünya pozisyonunu, rotasyonunu ve ölçeğini korumak için doğrudan atama yap
+                animatedModel.object3D.position.copy(currentWorldPos);
+                animatedModel.object3D.quaternion.copy(currentWorldRot);
+                animatedModel.object3D.scale.copy(currentWorldScale);
 
-                isModelLocked = true; // Modeli kilitli olarak işaretle
-                console.log("Model sabitlendi. Konum:", modelObject3D.position);
+                isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
+                console.log("Model sabitlendi. Konum:", animatedModel.object3D.position);
+            }
+
+            // *** BURADA DİKKAT: Hedef kaybedildiğinde arama UI'ını gizle ***
+            // MindAR'ın kendi uiScanning özelliğini kullanıyoruz.
+            if (mindarImageComponent) {
+                // Sadece uiScanning'i false yapıp bileşeni güncelliyoruz.
+                mindarImageComponent.data.uiScanning = false;
+                sceneEl.setAttribute('mindar-image', mindarImageComponent.data);
+                console.log("MindAR arama UI'ı gizlendi (targetLost).");
             }
             // Müzik çalmaya devam edecek.
           });
@@ -252,7 +257,7 @@
         }
       }
 
-      // *** YENİ FONKSİYON: AR sahnesini sıfırlama ve hedef arama moduna dönme ***
+      // YENİ FONKSİYON: AR sahnesini sıfırlama ve hedef arama moduna dönme
       function resetARScene() {
           console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
           // Sayfayı tamamen yeniden yüklemek, MindAR dahil tüm AR bileşenlerini sıfırlamanın en temiz yoludur.
@@ -267,7 +272,7 @@
   </head>
   <body>
     <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001; uiLoading: false; uiScanning: true;"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: true"
       webgl-renderer="preserveDrawingBuffer: true;"  
@@ -290,7 +295,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çakk İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
