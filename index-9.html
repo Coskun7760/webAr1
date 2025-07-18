@@ -154,8 +154,9 @@
             // Eğer amacın "tekrar ortaya çıkmasın" ise, bu kod işe yarar.
             // Eğer "hedef kaybolduğunda arama animasyonu görünür olsun" ise aşağıdaki satırı değiştirmen gerekir.
             if (mindarUiOverlay) {
-                mindarUiOverlay.classList.add('hidden'); // hidden sınıfını ekleyerek gizli kalmasını sağla
-                console.log("MindAR arama UI'ı gizlendi (targetLost).");
+                //mindarUiOverlay.classList.add('hidden'); // hidden sınıfını ekleyerek gizli kalmasını sağla
+                mindarUiOverlay.setAttribute('hidden', ''); 
+				console.log("MindAR arama UI'ı gizlendi (targetLost).");
             }
             // Müzik çalmaya devam edecek, bu kısımda durdurmuyoruz.
           });
