@@ -153,6 +153,9 @@
 				// 0.001 gibi çok küçük bir değerle başlayıp yavaş yavaş artır.
 				const setScale = '0.001 0.001 0.001'; // Veya '0.002 0.002 0.002', '0.005 0.005 0.005' gibi dene
 				
+				animatedModel.setAttribute('position', setPosition);
+				animatedModel.setAttribute('rotation', setRotation);
+				animatedModel.setAttribute('scale', setScale);
 			//	animatedModel.setAttribute('position', '0 0 -0.5'); // Kameranın 3 birim önünde, ortada
     			//animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan düz rotasyon
     			//animatedModel.setAttribute('scale', '1 1 1'); // Modelin tam boyutunda veya biraz daha büyük/küçük
