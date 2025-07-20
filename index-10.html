@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
 
     <style>
-      /* Buton stilleri aynı kalıyor */
+      /* Buton stilleri */
       .capture-button {
         position: fixed;
         bottom: 20px;
@@ -37,6 +37,11 @@
         height: 100%;
         object-fit: cover;
       }
+
+      /* MindAR'ın kendi tarama UI'ını başlangıçta gizlemek için bu CSS kuralını kullanıyoruz. */
+      .mindar-ui-overlay.mindar-ui-scanning {
+        display: none !important;
+      }
     </style>
 
     <script>
@@ -48,9 +53,10 @@
 
       AFRAME.registerComponent("mytarget", {
         init: function () {
-          const el = this.el; 
+          const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
           const sceneEl = document.querySelector('a-scene');
           const animatedModel = document.querySelector('#animatedModel');
+          const arCamera = document.querySelector('a-camera'); // Kamerayı yakalıyoruz!
 
           this.targetFoundOnce = false;  
           this.isModelAttachedToTarget = true; 
@@ -62,7 +68,7 @@
               if (mindarUiOverlay) {
                   console.log("MindAR UI Overlay bulundu.");
               } else {
-                  console.warn("MindAR UI Overlay elementi bulunamadı.");
+                  console.warn("MindAR UI Overlay elementi bulunamadı. Hedef arama UI'ını kontrol etmek mümkün olmayabilir.");
               }
           });		
 			
@@ -82,11 +88,11 @@
                 this.targetFoundOnce = true;
             }
 
-            // Eğer model sahneye sabitlenmişse (targetLost sonrası), hedefe geri taşı
+            // Eğer model kameraya sabitlenmişse (targetLost sonrası), hedefe geri taşı
             if (!this.isModelAttachedToTarget) {
                 console.log("Model hedefe geri ekleniyor.");
-                // Modeli sahneden kaldır (çünkü oraya sabitlenmişti)
-                sceneEl.object3D.remove(animatedModel.object3D); 
+                // Modeli kameradan kaldır
+                arCamera.object3D.remove(animatedModel.object3D); 
                 // Hedefe geri ekle
                 el.object3D.add(animatedModel.object3D); 
                 
@@ -101,34 +107,30 @@
             animatedModel.setAttribute('visible', true); 
           });
 
-          // Hedef kaybedildiğinde - MODELİ SAHNEDE SABİT BİR NOKTAYA TAŞIYORUZ
+          // Hedef kaybedildiğinde - MODELİ KAMERANIN ÖNÜNE SABİTLEYEN KISIM BURASI!
           el.addEventListener("targetLost", (event) => {
-            console.log("AR Hedefi kaybedildi! Model sahneye sabit bir noktaya taşınıyor.");
+            console.log("AR Hedefi kaybedildi! Model kameranın görüş alanının ortasına sabitleniyor.");
 
             // Hedef daha önce algılandıysa VE model hala hedefe bağlıysa
             if (this.targetFoundOnce && this.isModelAttachedToTarget) {
                 // Modeli hedeften kaldır
                 el.object3D.remove(animatedModel.object3D);
                 
-                // Modeli doğrudan A-Frame sahnesine ekle
-                sceneEl.object3D.add(animatedModel.object3D);
+                // Modeli doğrudan A-Frame kamerasının çocuk öğesi olarak ekle
+                // Bu, modelin her zaman kameranın görüş alanında kalmasını sağlar.
+                arCamera.object3D.add(animatedModel.object3D);
 
-                // *** BURASI DEĞİŞİYOR: Modeli sahnenin belirli bir global koordinatına yerleştir ***
-                // Bu koordinatlar, sahnedeki sabit bir noktayı temsil eder.
-                // Kamerayı hareket ettirdiğinde veya çevirdiğinde model bu noktadan kayacaktır.
-                // x:0 (sahnenin yatay merkezi)
-                // y:-0.5 (sahnenin dikey ekseninde biraz aşağı)
-                // z:-1.5 (kameranın önünde bir miktar mesafe)
-                animatedModel.object3D.position.set(0, -0.5, -1.5); 
-                animatedModel.object3D.rotation.set(0, 0, 0); // Rotasyonu sıfırla
-                animatedModel.object3D.scale.set(0.5, 0.5, 0.5); // Ölçeği koru
+                // Modelin konumunu kameranın yerel koordinatlarına göre ayarla
+                // x: 0 (yatayda orta)
+                // y: -0.5 (dikeyde biraz aşağıda olması için, modeline göre ayarla)
+                // z: -1.5 (kameradan 1.5 metre ileride, boyutuna göre ayarla)
+                animatedModel.setAttribute('position', '0 -0.5 -1.5'); 
+                animatedModel.setAttribute('rotation', '0 0 0'); // Rotasyonu sıfırla
+                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Ölçeği koru
 
-                this.isModelAttachedToTarget = false; // Modelin artık hedefe değil, sahneye bağlı olduğunu işaretle
+                this.isModelAttachedToTarget = false; // Modelin artık hedefe değil, kameraya bağlı olduğunu işaretle
             }
             
-            // Modelin görünürlüğünü koru (gizleme)
-            animatedModel.setAttribute('visible', true); // Model zaten görünür durumda kalmalı
-
             // MindAR arama UI'ını tekrar gizle
             if (mindarUiOverlay) {
                 mindarUiOverlay.style.setProperty('display', 'none', 'important');
@@ -262,7 +264,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek ttt İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek  İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
