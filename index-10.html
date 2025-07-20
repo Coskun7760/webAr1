@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
 
     <style>
-      /* Buton stilleri */
+      /* Buton stilleri aynı kalıyor */
       .capture-button {
         position: fixed;
         bottom: 20px;
@@ -40,35 +40,29 @@
     </style>
 
     <script>
-      // Arka plan müziği Howler.js ile tanımlanıyor
       var backgroundMusic = new Howl({
         src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
         volume: 1.0,
-        autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
+        autoplay: false 
       });
 
-      // A-Frame özel bileşeni: mytarget
       AFRAME.registerComponent("mytarget", {
         init: function () {
-          const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
-          const sceneEl = document.querySelector('a-scene'); // A-Frame sahnesi
-          const animatedModel = document.querySelector('#animatedModel'); // 3D model
+          const el = this.el; 
+          const sceneEl = document.querySelector('a-scene');
+          const animatedModel = document.querySelector('#animatedModel');
 
-          // Bileşen seviyesinde bayraklar
-          this.targetFoundOnce = false;  // Hedefin en az bir kez algılanıp algılanmadığını takip eder
-          this.isModelAttachedToTarget = true; // Modelin şu anda hedefin içinde mi yoksa sahneye sabitlenmiş mi olduğunu gösterir
+          this.targetFoundOnce = false;  
+          this.isModelAttachedToTarget = true; 
 
-          // MindAR'ın UI overlay elementini bulalım
           let mindarUiOverlay = null;
 
-          // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
           sceneEl.addEventListener('loaded', () => {
               mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
               if (mindarUiOverlay) {
                   console.log("MindAR UI Overlay bulundu.");
-                  // CSS kuralımız zaten bunu yapıyor, buraya ek kod gerekmez.
               } else {
-                  console.warn("MindAR UI Overlay elementi bulunamadı. Hedef arama UI'ını kontrol etmek mümkün olmayabilir.");
+                  console.warn("MindAR UI Overlay elementi bulunamadı.");
               }
           });		
 			
@@ -76,7 +70,6 @@
           el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
 
-            // 1. Hedef ilk bulunduğunda: 3D model görünsün ve müzik başlasın.
             if (!this.targetFoundOnce) {
                 if (backgroundMusic && !backgroundMusic.playing()) {
                     backgroundMusic.play();
@@ -89,57 +82,59 @@
                 this.targetFoundOnce = true;
             }
 
-            // 4. Hedefi tekrar gösterince: MindAR hedefi tekrar tanısın ve model tekrar hedefe sabitlensin.
-            // Modelin hedefe geri eklenmesi:
+            // Eğer model sahneye sabitlenmişse (targetLost sonrası), hedefe geri taşı
             if (!this.isModelAttachedToTarget) {
                 console.log("Model hedefe geri ekleniyor.");
-                sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
-                el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
+                // Modeli sahneden kaldır (çünkü oraya sabitlenmişti)
+                sceneEl.object3D.remove(animatedModel.object3D); 
+                // Hedefe geri ekle
+                el.object3D.add(animatedModel.object3D); 
                 
-                // Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
+                // Modelin pozisyonunu hedefe göre varsayılan haline getir
                 animatedModel.setAttribute('position', '0 -0.5 0.1');
-                animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
+                animatedModel.setAttribute('rotation', '0 0 0'); 
+                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); 
 
-                this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
+                this.isModelAttachedToTarget = true; 
             }
             
-            animatedModel.setAttribute('visible', true); // Modeli görünür yap
+            animatedModel.setAttribute('visible', true); 
           });
 
-          // Hedef kaybedildiğinde
+          // Hedef kaybedildiğinde - MODELİ SAHNEDE SABİT BİR NOKTAYA TAŞIYORUZ
           el.addEventListener("targetLost", (event) => {
-            console.log("AR Hedefi kaybedildi!");
+            console.log("AR Hedefi kaybedildi! Model sahneye sabit bir noktaya taşınıyor.");
 
-            // Hedef daha önce algılandıysa VE model hala hedefe bağlıysa, sahneye taşı
+            // Hedef daha önce algılandıysa VE model hala hedefe bağlıysa
             if (this.targetFoundOnce && this.isModelAttachedToTarget) {
-                console.log("Model ekranın ortasına sabitleniyor.");
-                
                 // Modeli hedeften kaldır
                 el.object3D.remove(animatedModel.object3D);
                 
-                // Modeli doğrudan sahneye ekle (sahne referanslı pozisyon)
+                // Modeli doğrudan A-Frame sahnesine ekle
                 sceneEl.object3D.add(animatedModel.object3D);
 
-                // *** BURADAN İTİBAREN DEĞİŞTİRİLDİ ***
-                // Modeli kameranın önünde, ekranın ortasında sabitle
-                // Kamera 0 0 0 konumunda olduğu için, modelin bu konuma göre ayarlanması gerekir.
-                // x:0 (yatayda orta), y:-0.5 (biraz aşağıda kalması için, modele göre ayarlanabilir)
-                // z:-1.5 (kameradan 1.5 metre ileride)
+                // *** BURASI DEĞİŞİYOR: Modeli sahnenin belirli bir global koordinatına yerleştir ***
+                // Bu koordinatlar, sahnedeki sabit bir noktayı temsil eder.
+                // Kamerayı hareket ettirdiğinde veya çevirdiğinde model bu noktadan kayacaktır.
+                // x:0 (sahnenin yatay merkezi)
+                // y:-0.5 (sahnenin dikey ekseninde biraz aşağı)
+                // z:-1.5 (kameranın önünde bir miktar mesafe)
                 animatedModel.object3D.position.set(0, -0.5, -1.5); 
                 animatedModel.object3D.rotation.set(0, 0, 0); // Rotasyonu sıfırla
                 animatedModel.object3D.scale.set(0.5, 0.5, 0.5); // Ölçeği koru
 
-                this.isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
+                this.isModelAttachedToTarget = false; // Modelin artık hedefe değil, sahneye bağlı olduğunu işaretle
             }
             
-            // KRİTİK DÜZELTME: Hedef kaybolduğunda MindAR 'hidden' sınıfını siliyor.
-            // Bu yüzden biz devreye girip MindAR'ın UI'ını tekrar gizliyoruz.
+            // Modelin görünürlüğünü koru (gizleme)
+            animatedModel.setAttribute('visible', true); // Model zaten görünür durumda kalmalı
+
+            // MindAR arama UI'ını tekrar gizle
             if (mindarUiOverlay) {
                 mindarUiOverlay.style.setProperty('display', 'none', 'important');
                 console.log("MindAR arama UI'ı hedef kaybedildiğinde JavaScript tarafından tekrar gizlendi.");
             }
-            // Müzik çalmaya devam edecek, bu kısımda durdurmuyoruz.
+            // Müzik çalmaya devam edecek.
           });
         },
       });
@@ -233,7 +228,7 @@
       // AR sahnesini sıfırlama ve hedef arama moduna dönme
       function resetARScene() {
           console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
-          location.reload(); // Sayfayı yeniden yüklemek en temiz sıfırlama yoludur
+          location.reload(); 
           
           if (backgroundMusic && backgroundMusic.playing()) {
               backgroundMusic.stop();
