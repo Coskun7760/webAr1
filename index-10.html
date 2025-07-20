@@ -69,7 +69,10 @@
               // Modelin kameraya göre başlangıç pozisyonunu ve ölçeğini ayarla
               // Bu değerler, modelin hedeften ayrıldığı andaki pozisyon ve ölçek olacaktır.
               // Eğer model kameranın çocuğu ise, pozisyonu kameraya göredir.
-              this.modelEl.object3D.position.set(0, -0.5, this.data.referenceZ); // Kameranın önünde sabit bir Z pozisyonu
+              // Sadece Z pozisyonunu set ediyoruz, X ve Y'yi koruyabiliriz veya sabitleyebiliriz.
+              // Şimdilik hedefe göre -0.5 Y sabit olduğu için onu koruyalım.
+              // X'i ise merkezde tutalım.
+              this.modelEl.object3D.position.set(0, -0.5, this.data.referenceZ); 
               this.modelEl.object3D.rotation.set(0, 0, 0); // Kameraya göre rotasyonunu sıfırla
               this.modelEl.object3D.scale.copy(this.data.referenceScale); // Başlangıç ölçeğini uygula
 
@@ -144,30 +147,26 @@
             }
 
             // Model hedefe geri ekleniyor
-            if (!this.isModelAttachedToTarget) {
-                console.log("Model hedefe geri ekleniyor.");
-                // Eğer model kameraya bağlıysa, önce kameradan kaldır
-                if (animatedModel.parentElement === cameraEl) {
-                    cameraEl.object3D.remove(animatedModel.object3D);
-                } else { // Sahneye bağlıysa sahneden kaldır
-                    sceneEl.object3D.remove(animatedModel.object3D); 
-                }
-                
-                el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
-                
-                // Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
-                animatedModel.setAttribute('position', '0 -0.5 0.1');
-                animatedModel.setAttribute('rotation', '0 0 0'); 
-                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); 
+            // Önce modelin mevcut ebeveyninden kaldırıldığından emin olalım
+            if (animatedModel.parentElement && animatedModel.parentElement.object3D) {
+                animatedModel.parentElement.object3D.remove(animatedModel.object3D);
+                console.log("Model mevcut ebeveyninden kaldırıldı.");
+            }
+            
+            el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
+            
+            // Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
+            animatedModel.setAttribute('position', '0 -0.5 0.1');
+            animatedModel.setAttribute('rotation', '0 0 0'); 
+            animatedModel.setAttribute('scale', '0.5 0.5 0.5'); 
 
-                this.isModelAttachedToTarget = true; 
+            this.isModelAttachedToTarget = true; 
 
-                // Hedef bulunduğunda fixed-model-scaler bileşenini kaldır
-                if (this.fixedModelScalerAdded) {
-                    animatedModel.removeAttribute('fixed-model-scaler');
-                    this.fixedModelScalerAdded = false;
-                    console.log("fixed-model-scaler kaldırıldı.");
-                }
+            // Hedef bulunduğunda fixed-model-scaler bileşenini kaldır
+            if (this.fixedModelScalerAdded) {
+                animatedModel.removeAttribute('fixed-model-scaler');
+                this.fixedModelScalerAdded = false;
+                console.log("fixed-model-scaler kaldırıldı.");
             }
             
             animatedModel.setAttribute('visible', true); 
@@ -182,16 +181,21 @@
                 console.log("Model kameraya sabitleniyor (görüş alanında kalacak).");
                 
                 // Modelin hedeften ayrıldığı anki dünya pozisyonu ve ölçeğini al
-
+                // Bu değerleri, fixed-model-scaler'a referans olarak vereceğiz.
                 const currentWorldPos = new THREE.Vector3();
                 animatedModel.object3D.getWorldPosition(currentWorldPos);
                 const currentWorldScale = new THREE.Vector3(); 
                 animatedModel.object3D.getWorldScale(currentWorldScale); 
 
-                el.object3D.remove(animatedModel.object3D); // Hedeften kaldır
+                // Modelin mevcut ebeveyninden kaldırıldığından emin olalım
+                if (animatedModel.parentElement && animatedModel.parentElement.object3D) {
+                    animatedModel.parentElement.object3D.remove(animatedModel.object3D);
+                    console.log("Model hedef ebeveyninden kaldırıldı.");
+                }
                 
                 // Modeli doğrudan kameranın çocuğu yap
                 cameraEl.object3D.add(animatedModel.object3D);
+                console.log("Model kameranın çocuğu yapıldı.");
 
                 // Kameraya göre sabit bir başlangıç pozisyonu ver
                 // Bu pozisyon, modelin kameraya göre nerede duracağını belirler (x, y, z)
@@ -211,7 +215,7 @@
                     maxScale: 10.0 
                 });
                 this.fixedModelScalerAdded = true;
-                console.log("fixed-model-scaler eklendi ve model kameraya bağlandı.");
+                console.log("fixed-model-scaler eklendi.");
             }
             
             if (mindarUiOverlay) {
@@ -346,7 +350,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek ttt İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek nnn İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
