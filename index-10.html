@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
 
     <style>
-      /* Buton stilleri aynı kalıyor */
+      /* Buton stilleri */
       .capture-button {
         position: fixed;
         bottom: 20px;
@@ -37,27 +37,22 @@
         height: 100%;
         object-fit: cover;
       }
-
-      /* Yükleniyor ekranını gizle (bu genellikle MindAR'ın ilk yüklemesinde görünür) */
-     
-      
-      /* MindAR'ın kendi tarama UI'ını başlangıçta gizlemek için bu CSS kuralını kullanıyoruz.
-         JavaScript ile 'hidden' sınıfını kaldırarak görünür yapacağız. */
-     
     </style>
 
     <script>
+      // Arka plan müziği Howler.js ile tanımlanıyor
       var backgroundMusic = new Howl({
         src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
         volume: 1.0,
         autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
       });
 
+      // A-Frame özel bileşeni: mytarget
       AFRAME.registerComponent("mytarget", {
         init: function () {
           const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
-          const sceneEl = document.querySelector('a-scene');
-          const animatedModel = document.querySelector('#animatedModel');
+          const sceneEl = document.querySelector('a-scene'); // A-Frame sahnesi
+          const animatedModel = document.querySelector('#animatedModel'); // 3D model
 
           // Bileşen seviyesinde bayraklar
           this.targetFoundOnce = false;  // Hedefin en az bir kez algılanıp algılanmadığını takip eder
@@ -71,11 +66,7 @@
               mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
               if (mindarUiOverlay) {
                   console.log("MindAR UI Overlay bulundu.");
-				  console.log(mindarUiOverlay);
-                  // Sayfa yüklendiğinde tarama UI'ını başlangıçta gizli tut.
                   // CSS kuralımız zaten bunu yapıyor, buraya ek kod gerekmez.
-                  // MindAR'ın kendi 'hidden' sınıfını manuel eklemeyeceğiz
-                  // çünkü CSS'imiz .mindar-ui-overlay.mindar-ui-scanning'i direkt gizliyor.
               } else {
                   console.warn("MindAR UI Overlay elementi bulunamadı. Hedef arama UI'ını kontrol etmek mümkün olmayabilir.");
               }
@@ -114,44 +105,35 @@
             }
             
             animatedModel.setAttribute('visible', true); // Modeli görünür yap
-
-         
           });
 
           // Hedef kaybedildiğinde
           el.addEventListener("targetLost", (event) => {
             console.log("AR Hedefi kaybedildi!");
 
-            // 2. Hedef kaybolduğunda (kameradan çıkınca): 3D model olduğu yerde sabit kalsın (kaybolmasın).
             // Hedef daha önce algılandıysa VE model hala hedefe bağlıysa, sahneye taşı
             if (this.targetFoundOnce && this.isModelAttachedToTarget) {
-                console.log("Model sahneye sabitleniyor.");
-                // Modelin mevcut dünya konumunu, rotasyonunu ve ölçeğini al
-                const currentWorldPos = new THREE.Vector3();
-                animatedModel.object3D.getWorldPosition(currentWorldPos);
-                const currentWorldRot = new THREE.Quaternion();
-                animatedModel.object3D.getWorldQuaternion(currentWorldRot);
-                const currentWorldScale = new THREE.Vector3();
-                animatedModel.object3D.getWorldScale(currentWorldScale); // Dünya ölçeğini de al
-
+                console.log("Model ekranın ortasına sabitleniyor.");
+                
                 // Modeli hedeften kaldır
                 el.object3D.remove(animatedModel.object3D);
                 
                 // Modeli doğrudan sahneye ekle (sahne referanslı pozisyon)
                 sceneEl.object3D.add(animatedModel.object3D);
 
-                // Dünya konumunu, rotasyonunu ve ölçeğini modele uygula
-                animatedModel.object3D.position.copy(currentWorldPos);
-                animatedModel.object3D.quaternion.copy(currentWorldRot);
-                animatedModel.object3D.scale.copy(currentWorldScale); // Ölçeği de uygula
+                // *** BURADAN İTİBAREN DEĞİŞTİRİLDİ ***
+                // Modeli kameranın önünde, ekranın ortasında sabitle
+                // Kamera 0 0 0 konumunda olduğu için, modelin bu konuma göre ayarlanması gerekir.
+                // x:0 (yatayda orta), y:-0.5 (biraz aşağıda kalması için, modele göre ayarlanabilir)
+                // z:-1.5 (kameradan 1.5 metre ileride)
+                animatedModel.object3D.position.set(0, -0.5, -1.5); 
+                animatedModel.object3D.rotation.set(0, 0, 0); // Rotasyonu sıfırla
+                animatedModel.object3D.scale.set(0.5, 0.5, 0.5); // Ölçeği koru
 
                 this.isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
             }
             
-            
-            
-			  
-			  // KRİTİK DÜZELTME: Hedef kaybolduğunda MindAR 'hidden' sınıfını siliyor.
+            // KRİTİK DÜZELTME: Hedef kaybolduğunda MindAR 'hidden' sınıfını siliyor.
             // Bu yüzden biz devreye girip MindAR'ın UI'ını tekrar gizliyoruz.
             if (mindarUiOverlay) {
                 mindarUiOverlay.style.setProperty('display', 'none', 'important');
