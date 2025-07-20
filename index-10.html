@@ -141,13 +141,13 @@
                 sceneEl.object3D.add(animatedModel.object3D);
 
                 // Dünya konumunu, rotasyonunu ve ölçeğini modele uygula
-               // animatedModel.object3D.position.copy(currentWorldPos);
-               // animatedModel.object3D.quaternion.copy(currentWorldRot);
-               // animatedModel.object3D.scale.copy(currentWorldScale); // Ölçeği de uygula
+                animatedModel.object3D.position.copy(currentWorldPos);
+                animatedModel.object3D.quaternion.copy(currentWorldRot);
+               	animatedModel.object3D.scale.copy(currentWorldScale); // Ölçeği de uygula
 				
-				animatedModel.setAttribute('position', '0 0 -0.5'); // Kameranın 3 birim önünde, ortada
-    			animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan düz rotasyon
-    			animatedModel.setAttribute('scale', '1 1 1'); // Modelin tam boyutunda veya biraz daha büyük/küçük
+			//	animatedModel.setAttribute('position', '0 0 -0.5'); // Kameranın 3 birim önünde, ortada
+    			//animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan düz rotasyon
+    			//animatedModel.setAttribute('scale', '1 1 1'); // Modelin tam boyutunda veya biraz daha büyük/küçük
 
 				// --- MODELİN DİREKT DEĞERLERİNİ BASİTÇE KONSOLA YAZDIRMA ---
 console.log("--- Modelin Son Durumu ---");
