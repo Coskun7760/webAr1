@@ -56,7 +56,7 @@
           const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
           const sceneEl = document.querySelector('a-scene');
           const animatedModel = document.querySelector('#animatedModel');
-          const arCamera = document.querySelector('a-camera'); // Kamerayı yakalıyoruz!
+          // Kamerayı burada yakalamıyoruz çünkü ona sabitlemeyeceğiz.
 
           this.targetFoundOnce = false;  
           this.isModelAttachedToTarget = true; 
@@ -88,13 +88,11 @@
                 this.targetFoundOnce = true;
             }
 
-            // Eğer model kameraya sabitlenmişse (targetLost sonrası), hedefe geri taşı
+            // Eğer model sahneye sabitlenmişse (targetLost sonrası), hedefe geri taşı
             if (!this.isModelAttachedToTarget) {
                 console.log("Model hedefe geri ekleniyor.");
-                // Modeli kameradan kaldır
-                arCamera.object3D.remove(animatedModel.object3D); 
-                // Hedefe geri ekle
-                el.object3D.add(animatedModel.object3D); 
+                sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
+                el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
                 
                 // Modelin pozisyonunu hedefe göre varsayılan haline getir
                 animatedModel.setAttribute('position', '0 -0.5 0.1');
@@ -107,28 +105,29 @@
             animatedModel.setAttribute('visible', true); 
           });
 
-          // Hedef kaybedildiğinde - MODELİ KAMERANIN ÖNÜNE SABİTLEYEN KISIM BURASI!
+          // Hedef kaybedildiğinde - MODELİ BELİRLİ DÜNYA KONUMUNA SABİTLEYEN KISIM BURASI
           el.addEventListener("targetLost", (event) => {
-            console.log("AR Hedefi kaybedildi! Model kameranın görüş alanının ortasına sabitleniyor.");
+            console.log("AR Hedefi kaybedildi! Model belirli bir dünya konumuna taşınıyor.");
 
             // Hedef daha önce algılandıysa VE model hala hedefe bağlıysa
             if (this.targetFoundOnce && this.isModelAttachedToTarget) {
                 // Modeli hedeften kaldır
                 el.object3D.remove(animatedModel.object3D);
                 
-                // Modeli doğrudan A-Frame kamerasının çocuk öğesi olarak ekle
-                // Bu, modelin her zaman kameranın görüş alanında kalmasını sağlar.
-                arCamera.object3D.add(animatedModel.object3D);
+                // Modeli doğrudan sahneye ekle (sahne referanslı pozisyon)
+                sceneEl.object3D.add(animatedModel.object3D);
 
-                // Modelin konumunu kameranın yerel koordinatlarına göre ayarla
-                // x: 0 (yatayda orta)
-                // y: -0.5 (dikeyde biraz aşağıda olması için, modeline göre ayarla)
-                // z: -1.5 (kameradan 1.5 metre ileride, boyutuna göre ayarla)
-                animatedModel.setAttribute('position', '0 -0.5 -1.5'); 
-                animatedModel.setAttribute('rotation', '0 0 0'); // Rotasyonu sıfırla
-                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Ölçeği koru
+                // --- BURASI KRİTİK DEĞİŞİKLİK ---
+                // Modelin konumunu, rotasyonunu ve ölçeğini BELİRLİ DÜNYA KOORDİNATLARINA ayarla.
+                // Bu değerleri istediğin gibi değiştirebilirsin.
+                // Örneğin:
+                // position: '0 0 0' sahnenin tam ortası
+                // position: '0 1 -3' y ekseninde 1 metre yukarı, z ekseninde 3 metre geriye.
+                animatedModel.setAttribute('position', '0 0 0'); // Modelin taşınacağı dünya pozisyonu
+                animatedModel.setAttribute('rotation', '0 0 0'); // Modelin yeni rotasyonu
+                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Modelin yeni ölçeği
 
-                this.isModelAttachedToTarget = false; // Modelin artık hedefe değil, kameraya bağlı olduğunu işaretle
+                this.isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
             }
             
             // MindAR arama UI'ını tekrar gizle
@@ -182,7 +181,7 @@
           const resolutionMultiplier = 2;	
 
           combinedCanvas.width = captureWidth * resolutionMultiplier;
-          combinedCanvas.height = captureHeight * resolutionMultiplier;
+          combinedCanvas.height = combinedCanvas.height * resolutionMultiplier;
 
           const ctx = combinedCanvas.getContext('2d');
           ctx.imageSmoothingEnabled = true;
@@ -264,7 +263,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek  İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek ttt İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
