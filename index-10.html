@@ -141,9 +141,17 @@
                 sceneEl.object3D.add(animatedModel.object3D);
 
                 // Dünya konumunu, rotasyonunu ve ölçeğini modele uygula
-                animatedModel.object3D.position.copy(currentWorldPos);
-                animatedModel.object3D.quaternion.copy(currentWorldRot);
-               	animatedModel.object3D.scale.copy(currentWorldScale); // Ölçeği de uygula
+               // animatedModel.object3D.position.copy(currentWorldPos);
+                //animatedModel.object3D.quaternion.copy(currentWorldRot);
+               	//animatedModel.object3D.scale.copy(currentWorldScale); // Ölçeği de uygula
+				
+				const setPosition = '0 0 -0.5'; // Kameradan yarım birim önde, ortada
+				const setRotation = '0 0 0';   // Varsayılan düz rotasyon
+
+				// KRİTİK AYAR: Bu ölçek değerini deneme yanılma ile bulacaksın.
+				// Önceki konsol çıktıları modelin çok büyük olduğunu gösterdiği için
+				// 0.001 gibi çok küçük bir değerle başlayıp yavaş yavaş artır.
+				const setScale = '0.001 0.001 0.001'; // Veya '0.002 0.002 0.002', '0.005 0.005 0.005' gibi dene
 				
 			//	animatedModel.setAttribute('position', '0 0 -0.5'); // Kameranın 3 birim önünde, ortada
     			//animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan düz rotasyon
