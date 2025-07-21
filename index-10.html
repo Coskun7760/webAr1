@@ -53,174 +53,197 @@
         autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
       });
 
-      AFRAME.registerComponent("mytarget", {
-        init: function () {
-          const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
-          const sceneEl = document.querySelector('a-scene');
-          const animatedModel = document.querySelector('#animatedModel');
-		  const cameraEl = document.querySelector('a-camera');
+   AFRAME.registerComponent("mytarget", {
+  init: function () {
+    const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
+    const sceneEl = document.querySelector('a-scene');
+    const animatedModel = document.querySelector('#animatedModel');
+    const cameraEl = document.querySelector('a-camera');
 
-          // Bileşen seviyesinde bayraklar
-          this.targetFoundOnce = false;  // Hedefin en az bir kez algılanıp algılanmadığını takip eder
-          this.isModelAttachedToTarget = true; // Modelin şu anda hedefin içinde mi yoksa sahneye sabitlenmiş mi olduğunu gösterir
+    this.targetFoundOnce = false;
+    this.isModelAttachedToTarget = true;
+    
+    // YENİ FLAG: Modelin şu an kameraya bağlı olup olmadığını net bir şekilde belirtir
+    this.modelAttachedToCamera = false; 
 
-          // MindAR'ın UI overlay elementini bulalım
-          let mindarUiOverlay = null;
+    // Kameranın başlangıç Z pozisyonunu kaydet (opsiyonel, hesaplama için)
+    // let initialCameraZ = 0; // Bu, kameranın başlangıç Z'si (genellikle 0)
+    // Modelin başlangıç ölçeği (hedef kaybolduğunda manuel ayarladığımız ölçek)
+    const initialModelScale = new THREE.Vector3(100, 100, 100); 
 
-          // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
-          sceneEl.addEventListener('loaded', () => {
-              mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
-              if (mindarUiOverlay) {
-                  console.log("MindAR UI Overlay bulundu.");
-				  console.log(mindarUiOverlay);
-                  // Sayfa yüklendiğinde tarama UI'ını başlangıçta gizli tut.
-                  // CSS kuralımız zaten bunu yapıyor, buraya ek kod gerekmez.
-                  // MindAR'ın kendi 'hidden' sınıfını manuel eklemeyeceğiz
-                  // çünkü CSS'imiz .mindar-ui-overlay.mindar-ui-scanning'i direkt gizliyor.
-              } else {
-                  console.warn("MindAR UI Overlay elementi bulunamadı. Hedef arama UI'ını kontrol etmek mümkün olmayabilir.");
-              }
-          });		
-			
-          // Hedef bulunduğunda
-          el.addEventListener("targetFound", (event) => {
-            console.log("AR Hedefi algılandı!");
+    let mindarUiOverlay = null;
 
-            // 1. Hedef ilk bulunduğunda: 3D model görünsün ve müzik başlasın.
-            if (!this.targetFoundOnce) {
-                if (backgroundMusic && !backgroundMusic.playing()) {
-                    backgroundMusic.play();
-                    console.log("Howler.js sesi oynatılıyor.");
-                } else if (backgroundMusic && backgroundMusic.playing()) {
-                    console.log("Howler.js sesi zaten çalıyor.");
-                } else {
-                    console.warn("Howler.js sesi başlatılamadı.");
-                }
-                this.targetFoundOnce = true;
-            }
+    sceneEl.addEventListener('loaded', () => {
+        mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
+        if (mindarUiOverlay) {
+            console.log("MindAR UI Overlay bulundu.");
+            mindarUiOverlay.style.setProperty('display', 'none', 'important');
+        } else {
+            console.warn("MindAR UI Overlay elementi bulunamadı. Hedef arama UI'ını kontrol etmek mümkün olmayabilir.");
+        }
+    });		
+    
+    animatedModel.addEventListener('model-loaded', () => {
+        console.log("3D Model tamamen yüklendi!");
+    });
 
-            // 4. Hedefi tekrar gösterince: MindAR hedefi tekrar tanısın ve model tekrar hedefe sabitlensin.
-            // Modelin hedefe geri eklenmesi:
-            if (!this.isModelAttachedToTarget) {
-                console.log("Model hedefe geri ekleniyor.");
-				// Kameranın çocuğu ise kameradan kaldır
-				if (animatedModel.parent === cameraEl.object3D) { // <<< BURASI EKLENDİ / DEĞİŞTİ
-					cameraEl.object3D.remove(animatedModel.object3D);
-				}
-				// Sahnenin çocuğu ise sahneden kaldır (normalde bu durum olmaz ama güvenlik için)
-				else if (animatedModel.parent === sceneEl.object3D) { // <<< BURASI EKLENDİ
-					sceneEl.object3D.remove(animatedModel.object3D);
-				}
-				
-                el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
-                
-                // Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
-                animatedModel.setAttribute('position', '0 -0.5 0.1');
-                animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
+    // --- HEDEF BULUNDUĞUNDA (TARGET FOUND) ---
+    el.addEventListener("targetFound", (event) => {
+      console.log("AR Hedefi algılandı!");
 
-                this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
-					// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
-				
-				
-            }
-            
-            animatedModel.setAttribute('visible', true); // Modeli görünür yap
+      if (!this.targetFoundOnce) {
+        if (typeof backgroundMusic !== 'undefined' && backgroundMusic && !backgroundMusic.playing()) {
+          backgroundMusic.play();
+          console.log("Howler.js sesi oynatılıyor.");
+        } else if (backgroundMusic && backgroundMusic.playing()) {
+          console.log("Howler.js sesi zaten çalıyor.");
+        } else {
+          console.warn("Howler.js sesi başlatılamadı.");
+        }
+        this.targetFoundOnce = true;
+      }
 
-         	// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
-				const checkPos = new THREE.Vector3();
-				animatedModel.object3D.getWorldPosition(checkPos);
-				const checkRot = new THREE.Quaternion();
-				animatedModel.object3D.getWorldQuaternion(checkRot);
-				const checkScale = new THREE.Vector3();
-				animatedModel.object3D.getWorldScale(checkScale);
+      if (!this.isModelAttachedToTarget) { // Eğer model şu an hedefe bağlı değilse
+        console.log("Model hedefe geri ekleniyor.");
+        
+        // Modelin şu anki parent'ını (üst öğesini) kontrol et ve kaldır
+        if (animatedModel.parent === cameraEl.object3D) { 
+            cameraEl.object3D.remove(animatedModel.object3D);
+        } else if (animatedModel.parent === sceneEl.object3D) { 
+            sceneEl.object3D.remove(animatedModel.object3D);
+        }
 
-				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
-				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
-				const checkEulerRot = new THREE.Euler().setFromQuaternion(checkRot, 'YXZ');
-				console.log("Dönme (Euler):", THREE.MathUtils.radToDeg(checkEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.z).toFixed(0));
-				console.log("Boyut:", checkScale.x.toFixed(2), checkScale.y.toFixed(2), checkScale.z.toFixed(2));
-				console.log("------------------------------------------------------------------");
-          });
+        // Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
+        animatedModel.setAttribute('position', '0 -0.5 0.1');
+        animatedModel.setAttribute('rotation', '0 0 0');
+        animatedModel.setAttribute('scale', '0.5 0.5 0.5'); 
 
-          // Hedef kaybedildiğinde
-          el.addEventListener("targetLost", (event) => {
-            console.log("AR Hedefi kaybedildi!");
+        el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
+        this.isModelAttachedToTarget = true; 
+        this.modelAttachedToCamera = false; // Model artık kameraya bağlı değil
+        console.log("Model hedef üzerinde görünür.");
+      }
+      
+      animatedModel.setAttribute('visible', true); // Modeli görünür yap
 
-            // 2. Hedef kaybolduğunda (kameradan çıkınca): 3D model olduğu yerde sabit kalsın (kaybolmasın).
-            // Hedef daha önce algılandıysa VE model hala hedefe bağlıysa, sahneye taşı
-            if (this.targetFoundOnce && this.isModelAttachedToTarget) {
-                console.log("Model sahneye sabitleniyor.");
-                // Modelin mevcut dünya konumunu, rotasyonunu ve ölçeğini al
-               /* const currentWorldPos = new THREE.Vector3();
-                animatedModel.object3D.getWorldPosition(currentWorldPos);
-                const currentWorldRot = new THREE.Quaternion();
-                animatedModel.object3D.getWorldQuaternion(currentWorldRot);
-                const currentWorldScale = new THREE.Vector3();
-                animatedModel.object3D.getWorldScale(currentWorldScale); // Dünya ölçeğini de al */
+      // ... (Konsol çıktıları aynı kalabilir)
+      const checkPos = new THREE.Vector3();
+      animatedModel.object3D.getWorldPosition(checkPos);
+      const checkRot = new THREE.Quaternion();
+      animatedModel.object3D.getWorldQuaternion(checkRot);
+      const checkScale = new THREE.Vector3();
+      animatedModel.object3D.getWorldScale(checkScale);
 
-                // Modeli hedeften kaldır
-                el.object3D.remove(animatedModel.object3D);
-                
-                // Modeli kameranın çocuğu yap <<< BURASI KRİTİK DEĞİŞİKLİK
-    			cameraEl.object3D.add(animatedModel.object3D);
+      console.log("--- HEDEF ÜZERİNDE: Modelin GERÇEK Dünya Değerleri ---");
+      console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
+      const checkEulerRot = new THREE.Euler().setFromQuaternion(checkRot, 'YXZ');
+      console.log("Dönme (Euler):", THREE.MathUtils.radToDeg(checkEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.z).toFixed(0));
+      console.log("Boyut:", checkScale.x.toFixed(2), checkScale.y.toFixed(2), checkScale.z.toFixed(2));
+      console.log("-----------------------------------------------------");
+    });
 
-                // Dünya konumunu, rotasyonunu ve ölçeğini modele uygula
-              /* 	animatedModel.object3D.position.copy(currentWorldPos);
-                animatedModel.object3D.quaternion.copy(currentWorldRot);
-               	animatedModel.object3D.scale.copy(currentWorldScale); // Ölçeği de uygula */
-				
-			 
-				// --- MANUEL OLARAK AYARLADIĞIMIZ SABİT DÜNYA DEĞERLERİ ---
-				// Bu değerler, modelin hedef kaybolduğunda ekranda istediğin yerde ve boyutta görünmesini sağlar.
-				//const setPositionVector = new THREE.Vector3(421.63, -333.53, -1684.36);     // Kameradan 3 birim önde, ortada.
-				//const setQuaternion = new THREE.Quaternion().identity();   // Hiç dönüş yok (0 0 0 Euler açısı gibi).
-				//const setScaleVector = new THREE.Vector3(452.22, 433.62, 446.03);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
+    // --- HEDEF KAYBOLDUĞUNDA (TARGET LOST) ---
+    el.addEventListener("targetLost", (event) => {
+      console.log("AR Hedefi kaybedildi!");
 
-				const setPositionVector = new THREE.Vector3(0, -75, -150);     // Kameradan 3 birim önde, ortada.
-				const setQuaternion = new THREE.Quaternion().identity();   // Hiç dönüş yok (0 0 0 Euler açısı gibi).
-				const setScaleVector = new THREE.Vector3(100, 100,  100);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
-				
-				
-				// Modelin pozisyon, rotasyon ve ölçeğini bu manuel değerlere ayarla
-				animatedModel.object3D.position.copy(setPositionVector);
-				animatedModel.object3D.quaternion.copy(setQuaternion);
-				animatedModel.object3D.scale.copy(setScaleVector);
+      if (this.targetFoundOnce && this.isModelAttachedToTarget) {
+        console.log("Model kameraya sabitleniyor.");
 
-			 
+        el.object3D.remove(animatedModel.object3D);
+        cameraEl.object3D.add(animatedModel.object3D); // Modeli kameranın çocuğu yap
 
-				// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
-				// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
-				const checkPos = new THREE.Vector3();
-				animatedModel.object3D.getWorldPosition(checkPos);
-				const checkRot = new THREE.Quaternion();
-				animatedModel.object3D.getWorldQuaternion(checkRot);
-				const checkScale = new THREE.Vector3();
-				animatedModel.object3D.getWorldScale(checkScale);
+        this.isModelAttachedToTarget = false;
+        this.modelAttachedToCamera = true; // Model artık kameraya bağlı
 
-				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
-				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
-				const checkEulerRot = new THREE.Euler().setFromQuaternion(checkRot, 'YXZ');
-				console.log("Dönme (Euler):", THREE.MathUtils.radToDeg(checkEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.z).toFixed(0));
-				console.log("Boyut:", checkScale.x.toFixed(2), checkScale.y.toFixed(2), checkScale.z.toFixed(2));
-				console.log("------------------------------------------------------------------");
-				
-                this.isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
-            }
-            
-            
-            
-			  
-			  // KRİTİK DÜZELTME: Hedef kaybolduğunda MindAR 'hidden' sınıfını siliyor.
-            // Bu yüzden biz devreye girip MindAR'ın UI'ını tekrar gizliyoruz.
-            if (mindarUiOverlay) {
-                mindarUiOverlay.style.setProperty('display', 'none', 'important');
-                console.log("MindAR arama UI'ı hedef kaybedildiğinde JavaScript tarafından tekrar gizlendi.");
-            }
-            // Müzik çalmaya devam edecek, bu kısımda durdurmuyoruz.
-          });
-        },
-      });
+        const localPos = new THREE.Vector3(0, -75, -450); 
+        const localRot = new THREE.Quaternion().identity();
+        const localScale = new THREE.Vector3(100, 100, 100); 
+
+        animatedModel.object3D.position.copy(localPos);
+        animatedModel.object3D.quaternion.copy(localRot);
+        animatedModel.object3D.scale.copy(localScale);
+        
+        // initialCameraZ = cameraEl.object3D.position.z; // Model kameraya bağlandığında kameranın Z'sini kaydet
+        
+        // ... (Konsol çıktıları aynı kalabilir)
+        const finalLocalPos = new THREE.Vector3();
+        animatedModel.object3D.getPosition(finalLocalPos); 
+        const finalLocalRot = new THREE.Quaternion();
+        animatedModel.object3D.getQuaternion(finalLocalRot); 
+        const finalLocalScale = new THREE.Vector3();
+        animatedModel.object3D.getScale(finalLocalScale); 
+
+        console.log("--- HEDEF KAYBOLDU: Modelin Kameraya Göre YEREL Değerleri ---");
+        console.log("Yerel Pozisyon (x, y, z):", finalLocalPos.x.toFixed(2), finalLocalPos.y.toFixed(2), finalLocalPos.z.toFixed(2));
+        const finalEulerRot = new THREE.Euler().setFromQuaternion(finalLocalRot, 'YXZ');
+        console.log("Yerel Dönme (Euler):", THREE.MathUtils.radToDeg(finalEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(finalEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(finalEulerRot.z).toFixed(0));
+        console.log("Yerel Boyut (x, y, z):", finalLocalScale.x.toFixed(2), finalLocalScale.y.toFixed(2), finalLocalScale.z.toFixed(2));
+        console.log("-------------------------------------------------------");
+      }
+
+      animatedModel.setAttribute('visible', true); 
+
+      if (mindarUiOverlay) {
+        mindarUiOverlay.style.setProperty('display', 'none', 'important');
+      }
+    });
+
+    // --- YENİ EKLENEN KISIM: tick FONKSİYONU ---
+    // Her karede çalışan fonksiyon
+    this.tick = function() {
+      if (this.modelAttachedToCamera) { // Model kameraya bağlıysa
+        const currentCameraZ = cameraEl.object3D.position.z; // Kameranın dünya Z pozisyonunu al
+
+        // Kameranın Z pozisyonuna göre modelin ölçeğini ayarla
+        // Bu formül ile dene-yanılma yapman gerekecek!
+        // Amacımız, kameranın Z'si değiştikçe modelin ölçeğini buna göre ayarlamak.
+        
+        // Örnek bir formül:
+        // Kameranın 0'dan ne kadar uzaklaştığını/yaklaştığını baz alalım.
+        // Daha düşük Z değeri (kameraya yakınlaşma) -> Model büyüsün
+        // Daha yüksek Z değeri (kameradan uzaklaşma) -> Model küçülsün
+        
+        // Kameranın Z pozisyonu negatif olabilir (ekrana doğru).
+        // Bu yüzden mutlak değeri veya 0'dan farkı önemlidir.
+        // Başlangıç mesafesi (modelin kameraya yerel Z'si) -450 idi.
+        // Kameranın dünya Z'si de genelde 0'a yakın olur.
+        
+        // Varsayalım ki ideal ölçeği (100) -450 Z mesafesinde istiyoruz.
+        // Kamera -300'e gelince büyüsün, -600'e gelince küçülsün.
+        
+        // Bir "sabit" referans noktası ve "hassasiyet" belirleyelim
+        const referenceZ = -450; // Modelin ideal boyutta olduğu Z mesafesi
+        const sensitivity = 0.5; // Z değişiminin ölçek üzerindeki etkisi (daha büyük hassasiyet = daha hızlı boyut değişimi)
+
+        // Kameranın referans Z'ye göre ne kadar değiştiğini bul
+        const zDifference = currentCameraZ - referenceZ; // Pozitif: uzaklaşma, Negatif: yakınlaşma
+
+        // Yeni ölçek faktörünü hesapla
+        // Inverse Square Law benzeri bir şey: mesafe arttıkça etki azalır, azaldıkça artar.
+        // Veya daha basit, lineer bir ilişki:
+        let scaleFactor = 1 + (-zDifference * sensitivity / 1000); // 1000'e bölerek etkiyi azaltıyoruz
+
+        // Ölçek faktörünü sınırlayabiliriz, aşırı büyük veya küçük olmasın
+        scaleFactor = Math.max(0.1, Math.min(2.0, scaleFactor)); // Örn: 0.1x ile 2.0x arasında
+
+        // Modelin başlangıç ölçeğini (100) yeni faktörle çarp
+        const newScaleX = initialModelScale.x * scaleFactor;
+        const newScaleY = initialModelScale.y * scaleFactor;
+        const newScaleZ = initialModelScale.z * scaleFactor;
+
+        animatedModel.object3D.scale.set(newScaleX, newScaleY, newScaleZ);
+        
+        // Debug için konsola yazdır
+        // console.log(`Kamera Z: ${currentCameraZ.toFixed(2)}, Fark: ${zDifference.toFixed(2)}, Ölçek Faktör: ${scaleFactor.toFixed(2)}`);
+        // console.log(`Yeni Model Ölçeği: ${newScaleX.toFixed(2)}`);
+      }
+    };
+  },
+  // Eğer component'i durdurursak tick fonksiyonunu da durdurmalıyız (cleanup)
+  // remove: function() {
+  //   this.el.sceneEl.removeEventListener('tick', this.tick);
+  // }
+});
 
       // Fotoğraf çekme fonksiyonu - AYNI KALDI
       async function takeScreenshot() {
