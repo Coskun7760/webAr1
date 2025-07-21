@@ -157,9 +157,9 @@
                 sceneEl.object3D.add(animatedModel.object3D);
 
                 // Dünya konumunu, rotasyonunu ve ölçeğini modele uygula
-               	//animatedModel.object3D.position.copy(currentWorldPos);
-                //animatedModel.object3D.quaternion.copy(currentWorldRot);
-               	//animatedModel.object3D.scale.copy(currentWorldScale); // Ölçeği de uygula
+               	animatedModel.object3D.position.copy(currentWorldPos);
+                animatedModel.object3D.quaternion.copy(currentWorldRot);
+               	animatedModel.object3D.scale.copy(currentWorldScale); // Ölçeği de uygula
 				
 				//const setPosition = '0 0 -0.1'; // Kameraya ÇOK YAKINlaştır 
 				//const setScale = '0.5 0.5 0.5'; // Boyutu BÜYÜT, gözden kaçmasın
@@ -181,10 +181,10 @@
 				const setRotation = '0 0 0';   // Varsayılan düz rotasyon
 				const setScale = new THREE.Vector3(1,1,1);  // Veya '0.002 0.002 0.002', '0.005 0.005 0.005' gibi dene
 				
-				animatedModel.object3D.position.copy(setPosition);
+				// animatedModel.object3D.position.copy(setPosition);
                 // !!! BURASI KRİTİK: Doğrudan THREE.js objesini kullanarak uygula !!!
-				animatedModel.object3D.quaternion.copy(setQuaternion);
-               	animatedModel.object3D.scale.copy(setScale); // Ölçeği de uygula
+				// animatedModel.object3D.quaternion.copy(setQuaternion);
+               	// animatedModel.object3D.scale.copy(setScale); // Ölçeği de uygula
 				
 				// animatedModel.setAttribute('position', setPosition);
 				// animatedModel.setAttribute('rotation', setRotation);
@@ -336,7 +336,7 @@
         <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
       </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: false" fov="90" far="1000"></a-camera>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
         <a-gltf-model
@@ -349,7 +349,7 @@
       </a-entity>
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek YLV İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek  İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
