@@ -58,7 +58,6 @@
           const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
           const sceneEl = document.querySelector('a-scene');
           const animatedModel = document.querySelector('#animatedModel');
-		  const cameraEl = document.querySelector('a-camera');
 
           // Bileşen seviyesinde bayraklar
           this.targetFoundOnce = false;  // Hedefin en az bir kez algılanıp algılanmadığını takip eder
@@ -103,15 +102,7 @@
             // Modelin hedefe geri eklenmesi:
             if (!this.isModelAttachedToTarget) {
                 console.log("Model hedefe geri ekleniyor.");
-				// Kameranın çocuğu ise kameradan kaldır
-				if (animatedModel.parent === cameraEl.object3D) { // <<< BURASI EKLENDİ / DEĞİŞTİ
-					cameraEl.object3D.remove(animatedModel.object3D);
-				}
-				// Sahnenin çocuğu ise sahneden kaldır (normalde bu durum olmaz ama güvenlik için)
-				else if (animatedModel.parent === sceneEl.object3D) { // <<< BURASI EKLENDİ
-					sceneEl.object3D.remove(animatedModel.object3D);
-				}
-				
+                sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
                 el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
                 
                 // Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
@@ -162,8 +153,8 @@
                 // Modeli hedeften kaldır
                 el.object3D.remove(animatedModel.object3D);
                 
-                // Modeli kameranın çocuğu yap <<< BURASI KRİTİK DEĞİŞİKLİK
-    			cameraEl.object3D.add(animatedModel.object3D);
+                // Modeli doğrudan sahneye ekle (sahne referanslı pozisyon)
+                sceneEl.object3D.add(animatedModel.object3D);
 
                 // Dünya konumunu, rotasyonunu ve ölçeğini modele uygula
               /* 	animatedModel.object3D.position.copy(currentWorldPos);
