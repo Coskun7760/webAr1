@@ -113,25 +113,25 @@
                 this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
 					// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
 				
-// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
-const checkPos = new THREE.Vector3();
-animatedModel.object3D.getWorldPosition(checkPos);
-const checkRot = new THREE.Quaternion();
-animatedModel.object3D.getWorldQuaternion(checkRot);
-const checkScale = new THREE.Vector3();
-animatedModel.object3D.getWorldScale(checkScale);
-
-console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
-console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
-const checkEulerRot = new THREE.Euler().setFromQuaternion(checkRot, 'YXZ');
-console.log("Dönme (Euler):", THREE.MathUtils.radToDeg(checkEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.z).toFixed(0));
-console.log("Boyut:", checkScale.x.toFixed(2), checkScale.y.toFixed(2), checkScale.z.toFixed(2));
-console.log("------------------------------------------------------------------");
+				
             }
             
             animatedModel.setAttribute('visible', true); // Modeli görünür yap
 
-         
+         	// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
+				const checkPos = new THREE.Vector3();
+				animatedModel.object3D.getWorldPosition(checkPos);
+				const checkRot = new THREE.Quaternion();
+				animatedModel.object3D.getWorldQuaternion(checkRot);
+				const checkScale = new THREE.Vector3();
+				animatedModel.object3D.getWorldScale(checkScale);
+
+				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
+				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
+				const checkEulerRot = new THREE.Euler().setFromQuaternion(checkRot, 'YXZ');
+				console.log("Dönme (Euler):", THREE.MathUtils.radToDeg(checkEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.z).toFixed(0));
+				console.log("Boyut:", checkScale.x.toFixed(2), checkScale.y.toFixed(2), checkScale.z.toFixed(2));
+				console.log("------------------------------------------------------------------");
           });
 
           // Hedef kaybedildiğinde
@@ -157,43 +157,43 @@ console.log("------------------------------------------------------------------"
                 sceneEl.object3D.add(animatedModel.object3D);
 
                 // Dünya konumunu, rotasyonunu ve ölçeğini modele uygula
-               // animatedModel.object3D.position.copy(currentWorldPos);
+               	//animatedModel.object3D.position.copy(currentWorldPos);
                 //animatedModel.object3D.quaternion.copy(currentWorldRot);
                	//animatedModel.object3D.scale.copy(currentWorldScale); // Ölçeği de uygula
 				
-			//	const setPosition = '0 0 -0.1'; // Kameraya ÇOK YAKINlaştır 
+				//const setPosition = '0 0 -0.1'; // Kameraya ÇOK YAKINlaştır 
 				//const setScale = '0.5 0.5 0.5'; // Boyutu BÜYÜT, gözden kaçmasın
 				
 				const setPosition = '0 0 -3'; // Kameradan yarım birim önde, ortada
 				const setRotation = '0 0 0';   // Varsayılan düz rotasyon
-
-				// KRİTİK AYAR: Bu ölçek değerini deneme yanılma ile bulacaksın.
-				// Önceki konsol çıktıları modelin çok büyük olduğunu gösterdiği için
-				// 0.001 gibi çok küçük bir değerle başlayıp yavaş yavaş artır.
 				const setScale = '1 1 1'; // Veya '0.002 0.002 0.002', '0.005 0.005 0.005' gibi dene
 				
-				animatedModel.setAttribute('position', setPosition);
-				animatedModel.setAttribute('rotation', setRotation);
-				animatedModel.setAttribute('scale', setScale);
+				animatedModel.object3D.position.copy(setPosition);
+                animatedModel.object3D.quaternion.copy(setRotation);
+               	animatedModel.object3D.scale.copy(setScale); // Ölçeği de uygula
+				
+				// animatedModel.setAttribute('position', setPosition);
+				// animatedModel.setAttribute('rotation', setRotation);
+				// animatedModel.setAttribute('scale', setScale);
 			//	animatedModel.setAttribute('position', '0 0 -0.5'); // Kameranın 3 birim önünde, ortada
     			//animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan düz rotasyon
     			//animatedModel.setAttribute('scale', '1 1 1'); // Modelin tam boyutunda veya biraz daha büyük/küçük
 
-		// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
-// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
-const checkPos = new THREE.Vector3();
-animatedModel.object3D.getWorldPosition(checkPos);
-const checkRot = new THREE.Quaternion();
-animatedModel.object3D.getWorldQuaternion(checkRot);
-const checkScale = new THREE.Vector3();
-animatedModel.object3D.getWorldScale(checkScale);
+				// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
+				// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
+				const checkPos = new THREE.Vector3();
+				animatedModel.object3D.getWorldPosition(checkPos);
+				const checkRot = new THREE.Quaternion();
+				animatedModel.object3D.getWorldQuaternion(checkRot);
+				const checkScale = new THREE.Vector3();
+				animatedModel.object3D.getWorldScale(checkScale);
 
-console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
-console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
-const checkEulerRot = new THREE.Euler().setFromQuaternion(checkRot, 'YXZ');
-console.log("Dönme (Euler):", THREE.MathUtils.radToDeg(checkEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.z).toFixed(0));
-console.log("Boyut:", checkScale.x.toFixed(2), checkScale.y.toFixed(2), checkScale.z.toFixed(2));
-console.log("------------------------------------------------------------------");
+				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
+				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
+				const checkEulerRot = new THREE.Euler().setFromQuaternion(checkRot, 'YXZ');
+				console.log("Dönme (Euler):", THREE.MathUtils.radToDeg(checkEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.z).toFixed(0));
+				console.log("Boyut:", checkScale.x.toFixed(2), checkScale.y.toFixed(2), checkScale.z.toFixed(2));
+				console.log("------------------------------------------------------------------");
 				
                 this.isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
             }
