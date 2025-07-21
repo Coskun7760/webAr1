@@ -164,12 +164,26 @@
 				//const setPosition = '0 0 -0.1'; // Kameraya ÇOK YAKINlaştır 
 				//const setScale = '0.5 0.5 0.5'; // Boyutu BÜYÜT, gözden kaçmasın
 				
-				const setPosition = '0 0 -3'; // Kameradan yarım birim önde, ortada
+				const setPosition =new THREE.Vector3(0,0,-3);  // Kameradan yarım birim önde, ortada
+				
+				// Rotasyon için: 0 derece olduğu için tüm eksenlerde 0 radyan
+				// Dönüş sırası genellikle 'XYZ' veya 'YXZ' olarak kullanılır.
+				const setRotationEuler = new THREE.Euler(0, 0, 0, 'XYZ'); // 0 radian Euler açıları
+
+				// Quaternion objesini oluştur ve Euler'den ayarla
+				const setQuaternion = new THREE.Quaternion();
+				setQuaternion.setFromEuler(setRotationEuler);
+				// Veya daha kısası:
+				// const setQuaternion = new THREE.Quaternion().identity(); // Doğrudan kimlik Quaternion
+
+				
+				
 				const setRotation = '0 0 0';   // Varsayılan düz rotasyon
-				const setScale = '1 1 1'; // Veya '0.002 0.002 0.002', '0.005 0.005 0.005' gibi dene
+				const setScale = new THREE.Vector3(1,1,1);  // Veya '0.002 0.002 0.002', '0.005 0.005 0.005' gibi dene
 				
 				animatedModel.object3D.position.copy(setPosition);
-                animatedModel.object3D.quaternion.copy(setRotation);
+                // !!! BURASI KRİTİK: Doğrudan THREE.js objesini kullanarak uygula !!!
+				animatedModel.object3D.quaternion.copy(setQuaternion);
                	animatedModel.object3D.scale.copy(setScale); // Ölçeği de uygula
 				
 				// animatedModel.setAttribute('position', setPosition);
