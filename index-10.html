@@ -217,7 +217,7 @@
         init: function () {
           const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
           const sceneEl = document.querySelector('a-scene');
-          const animatedModel = document.querySelector('#animatedModel1');
+          const animatedModel1 = document.querySelector('#animatedModel1');
 
           // Bileşen seviyesinde bayraklar
           this.targetFoundOnce = false;  // Hedefin en az bir kez algılanıp algılanmadığını takip eder
@@ -262,13 +262,13 @@
             // Modelin hedefe geri eklenmesi:
             if (!this.isModelAttachedToTarget) {
                 console.log("Model hedefe geri ekleniyor.");
-                sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
-                el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
+                sceneEl.object3D.remove(animatedModel1.object3D); // Sahneden kaldır
+                el.object3D.add(animatedModel1.object3D); // Hedefe geri ekle
                 
                 // Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
-                animatedModel.setAttribute('position', '0 -0.5 0.1');
-                animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
+                animatedModel1.setAttribute('position', '0 -0.5 0.1');
+                animatedModel1.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
+                animatedModel1.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
 
                 this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
 					// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
@@ -276,15 +276,15 @@
 				
             }
             
-            animatedModel.setAttribute('visible', true); // Modeli görünür yap
+            animatedModel1.setAttribute('visible', true); // Modeli görünür yap
 
          	// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
 				const checkPos = new THREE.Vector3();
-				animatedModel.object3D.getWorldPosition(checkPos);
+				animatedModel1.object3D.getWorldPosition(checkPos);
 				const checkRot = new THREE.Quaternion();
-				animatedModel.object3D.getWorldQuaternion(checkRot);
+				animatedModel1.object3D.getWorldQuaternion(checkRot);
 				const checkScale = new THREE.Vector3();
-				animatedModel.object3D.getWorldScale(checkScale);
+				animatedModel1.object3D.getWorldScale(checkScale);
 
 				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
 				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
@@ -311,10 +311,10 @@
                 animatedModel.object3D.getWorldScale(currentWorldScale); // Dünya ölçeğini de al */
 
                 // Modeli hedeften kaldır
-                el.object3D.remove(animatedModel.object3D);
+                el.object3D.remove(animatedModel1.object3D);
                 
                 // Modeli doğrudan sahneye ekle (sahne referanslı pozisyon)
-                sceneEl.object3D.add(animatedModel.object3D);
+                sceneEl.object3D.add(animatedModel1.object3D);
 
                 // Dünya konumunu, rotasyonunu ve ölçeğini modele uygula
               /* 	animatedModel.object3D.position.copy(currentWorldPos);
@@ -334,20 +334,20 @@
 				
 				
 				// Modelin pozisyon, rotasyon ve ölçeğini bu manuel değerlere ayarla
-				animatedModel.object3D.position.copy(setPositionVector);
-				animatedModel.object3D.quaternion.copy(setQuaternion);
-				animatedModel.object3D.scale.copy(setScaleVector);
+				animatedModel1.object3D.position.copy(setPositionVector);
+				animatedModel1.object3D.quaternion.copy(setQuaternion);
+				animatedModel1.object3D.scale.copy(setScaleVector);
 
 			 
 
 				// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
 				// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
 				const checkPos = new THREE.Vector3();
-				animatedModel.object3D.getWorldPosition(checkPos);
+				animatedModel1.object3D.getWorldPosition(checkPos);
 				const checkRot = new THREE.Quaternion();
-				animatedModel.object3D.getWorldQuaternion(checkRot);
+				animatedModel1.object3D.getWorldQuaternion(checkRot);
 				const checkScale = new THREE.Vector3();
-				animatedModel.object3D.getWorldScale(checkScale);
+				animatedModel1.object3D.getWorldScale(checkScale);
 
 				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
 				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
@@ -377,7 +377,7 @@
         init: function () {
           const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
           const sceneEl = document.querySelector('a-scene');
-          const animatedModel = document.querySelector('#animatedModel2');
+          const animatedModel2 = document.querySelector('#animatedModel2');
 
           // Bileşen seviyesinde bayraklar
           this.targetFoundOnce = false;  // Hedefin en az bir kez algılanıp algılanmadığını takip eder
@@ -422,13 +422,13 @@
             // Modelin hedefe geri eklenmesi:
             if (!this.isModelAttachedToTarget) {
                 console.log("Model hedefe geri ekleniyor.");
-                sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
-                el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
+                sceneEl.object3D.remove(animatedModel2.object3D); // Sahneden kaldır
+                el.object3D.add(animatedModel2.object3D); // Hedefe geri ekle
                 
                 // Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
-                animatedModel.setAttribute('position', '0 -0.5 0.1');
-                animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
+                animatedModel2.setAttribute('position', '0 -0.5 0.1');
+                animatedModel2.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
+                animatedModel2.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
 
                 this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
 					// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
@@ -436,15 +436,15 @@
 				
             }
             
-            animatedModel.setAttribute('visible', true); // Modeli görünür yap
+            animatedModel2.setAttribute('visible', true); // Modeli görünür yap
 
          	// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
 				const checkPos = new THREE.Vector3();
-				animatedModel.object3D.getWorldPosition(checkPos);
+				animatedModel2.object3D.getWorldPosition(checkPos);
 				const checkRot = new THREE.Quaternion();
-				animatedModel.object3D.getWorldQuaternion(checkRot);
+				animatedModel2.object3D.getWorldQuaternion(checkRot);
 				const checkScale = new THREE.Vector3();
-				animatedModel.object3D.getWorldScale(checkScale);
+				animatedModel2.object3D.getWorldScale(checkScale);
 
 				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
 				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
@@ -471,10 +471,10 @@
                 animatedModel.object3D.getWorldScale(currentWorldScale); // Dünya ölçeğini de al */
 
                 // Modeli hedeften kaldır
-                el.object3D.remove(animatedModel.object3D);
+                el.object3D.remove(animatedModel2.object3D);
                 
                 // Modeli doğrudan sahneye ekle (sahne referanslı pozisyon)
-                sceneEl.object3D.add(animatedModel.object3D);
+                sceneEl.object3D.add(animatedModel2.object3D);
 
                 // Dünya konumunu, rotasyonunu ve ölçeğini modele uygula
               /* 	animatedModel.object3D.position.copy(currentWorldPos);
@@ -494,20 +494,20 @@
 				
 				
 				// Modelin pozisyon, rotasyon ve ölçeğini bu manuel değerlere ayarla
-				animatedModel.object3D.position.copy(setPositionVector);
-				animatedModel.object3D.quaternion.copy(setQuaternion);
-				animatedModel.object3D.scale.copy(setScaleVector);
+				animatedModel2.object3D.position.copy(setPositionVector);
+				animatedModel2.object3D.quaternion.copy(setQuaternion);
+				animatedModel2.object3D.scale.copy(setScaleVector);
 
 			 
 
 				// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
 				// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
 				const checkPos = new THREE.Vector3();
-				animatedModel.object3D.getWorldPosition(checkPos);
+				animatedModel2.object3D.getWorldPosition(checkPos);
 				const checkRot = new THREE.Quaternion();
-				animatedModel.object3D.getWorldQuaternion(checkRot);
+				animatedModel2.object3D.getWorldQuaternion(checkRot);
 				const checkScale = new THREE.Vector3();
-				animatedModel.object3D.getWorldScale(checkScale);
+				animatedModel2.object3D.getWorldScale(checkScale);
 
 				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
 				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
