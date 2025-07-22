@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+
+    <style>
+      /* Buton stilleri aynı kalıyor */
+      .capture-button {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 30px;
+        font-size: 1.2em;
+        background-color: #4CAF50; /* Yeşil */
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 1000; /* AR sahnesinin üzerinde görünmesi için */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: background-color 0.3s ease;
+      }
+      .capture-button:hover {
+        background-color: #45a049;
+      }
+      video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Yükleniyor ekranını gizle (bu genellikle MindAR'ın ilk yüklemesinde görünür) */
+     
+      
+      /* MindAR'ın kendi tarama UI'ını başlangıçta gizlemek için bu CSS kuralını kullanıyoruz.
+         JavaScript ile 'hidden' sınıfını kaldırarak görünür yapacağız. */
+     
+    </style>
+
+    
+  </head>
+  <body>
+	  
+	   	  
+    <a-scene
+      mindar-image="imageTargetSrc: ./targetsMulti.mind; filterMinCF:0.0001; filterBeta: 0.001;"
+      vr-mode-ui="enabled: false"
+	  color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
+      device-orientation-permission-ui="enabled: false"
+      webgl-renderer="preserveDrawingBuffer: true;"  
+      screenshot="" 
+			  > 
+      <a-assets>
+        <a-asset-item id="model1" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
+		<a-asset-item id="model2" src="https://coskun7760.github.io/webAr1/muze-123.gltf"></a-asset-item> 
+		<a-asset-item id="model3" src="https://coskun7760.github.io/webAr1/muze-1234.gltf"></a-asset-item> 
+		  
+        <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
+        <a-gltf-model
+          id="animatedModel"
+		  rotation="0 0 0 "
+          position="0 -0.5 0.1"
+          scale="0.5 0.5 0.5"
+          src="#model1"
+          animation-mixer="timeScale: 1"
+          visible="true"> </a-gltf-model>
+      </a-entity>
+		
+	 <a-entity id="mytarget1" mytarget mindar-image-target="targetIndex: 1">
+        <a-gltf-model
+          id="animatedModel1"
+          position="0 -0.5 0.1"
+          scale="0.5 0.5 0.5"
+          src="#model2"
+          animation-mixer="timeScale: 1"
+          visible="true"> </a-gltf-model>
+      </a-entity>
+		
+		 <a-entity id="mytarget2" mytarget mindar-image-target="targetIndex: 2">
+        <a-gltf-model
+          id="animatedModel2"
+          position="0 -0.5 0.1"
+          scale="0.5 0.5 0.5"
+          src="#model3"
+          animation-mixer="timeScale: 1"
+          visible="true"> </a-gltf-model>
+      </a-entity>
+		
+		
+    </a-scene>
+
+    
+
+  </body>
+</html>
