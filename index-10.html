@@ -99,40 +99,31 @@
                 this.targetFoundOnce = true;
             }
 
-            // 4. Hedefi tekrar gösterince: MindAR hedefi tekrar tanısın ve model tekrar hedefe sabitlensin.
-            // Modelin hedefe geri eklenmesi:
-            if (!this.isModelAttachedToTarget) {
-                console.log("Model hedefe geri ekleniyor.");
-                sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
-                el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
-                
-                // Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
-                animatedModel.setAttribute('position', '0 -0.5 0.1');
-                animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-                animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
+            // KRİTİK DÜZELTME: İlk olarak, sahnedeki TÜM 3D modelleri gizle
+			// Bu, önceki hedefin modelinin ekranda kalmasını engeller.
+			document.querySelectorAll('a-gltf-model').forEach(model => {
+				model.setAttribute('visible', false);
+			});
 
-                this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
-					// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
-				
-				
-            }
-            
-            animatedModel.setAttribute('visible', true); // Modeli görünür yap
+			// 4. Hedefi tekrar gösterince: MindAR hedefi tekrar tanısın ve model tekrar hedefe sabitlensin.
+			// Modelin hedefe geri eklenmesi:
+			if (!this.isModelAttachedToTarget) {
+				console.log("Model hedefe geri ekleniyor.");
+				sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
+				el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
 
-         	// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
-				const checkPos = new THREE.Vector3();
-				animatedModel.object3D.getWorldPosition(checkPos);
-				const checkRot = new THREE.Quaternion();
-				animatedModel.object3D.getWorldQuaternion(checkRot);
-				const checkScale = new THREE.Vector3();
-				animatedModel.object3D.getWorldScale(checkScale);
+				// Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
+				animatedModel.setAttribute('position', '0 -0.5 0.1');
+				animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
+				animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
 
-				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
-				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
-				const checkEulerRot = new THREE.Euler().setFromQuaternion(checkRot, 'YXZ');
-				console.log("Dönme (Euler):", THREE.MathUtils.radToDeg(checkEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.z).toFixed(0));
-				console.log("Boyut:", checkScale.x.toFixed(2), checkScale.y.toFixed(2), checkScale.z.toFixed(2));
-				console.log("------------------------------------------------------------------");
+				this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
+			}
+
+			// Modeli görünür yap
+			animatedModel.setAttribute('visible', true); 
+
+         	
           });
 
           // Hedef kaybedildiğinde
