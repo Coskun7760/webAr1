@@ -47,7 +47,7 @@
     </style>
 
     <script>
-      var backgroundMusic = new Howl({
+      var modelSound1 = new Howl({
         src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
         volume: 1.0,
         autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
@@ -67,6 +67,11 @@
           // MindAR'ın UI overlay elementini bulalım
           let mindarUiOverlay = null;
 
+		   // Bu hedefe ait ses değişkenini bulma
+            let backgroundMusic;
+            if (targetIndex === 0) {
+                backgroundMusic = modelSound1;
+            } 
           // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
           sceneEl.addEventListener('loaded', () => {
               mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
@@ -295,13 +300,13 @@
 
       // AR sahnesini sıfırlama ve hedef arama moduna dönme
       function resetARScene() {
-          console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
-          location.reload(); // Sayfayı yeniden yüklemek en temiz sıfırlama yoludur
-          
-          if (backgroundMusic && backgroundMusic.playing()) {
-              backgroundMusic.stop();
-              console.log("Howler.js sesi durduruldu.");
-          }
+			console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
+			location.reload(); // Sayfayı yeniden yüklemek en temiz sıfırlama yoludur
+
+			// KRİTİK DÜZELTME: Artık tüm sesleri durdurmak için Howler.stop() kullanıyoruz.
+			// Bu, hangi sesin çalıyor olursa olsun, hepsini durduracaktır.
+			Howler.stop();
+			console.log("Tüm Howler.js sesleri durduruldu.");
       }
     </script>
   </head>
@@ -318,7 +323,9 @@
 		<a-asset-item id="model2" src="https://coskun7760.github.io/webAr1/muze-123.gltf"> </a-asset-item> 
 		<a-asset-item id="model3" src="https://coskun7760.github.io/webAr1/muze-1234.gltf"> </a-asset-item> 
 		  
-        <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="modelSound1" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
+		  
+		  
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
