@@ -1,0 +1,118 @@
+
+    <script>
+      var backgroundMusic = new Howl({
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
+        volume: 1.0,
+        autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
+      });
+
+     
+		
+		
+		
+		
+		
+		 
+
+		
+		
+		
+		
+		
+      // Fotoğraf çekme fonksiyonu - AYNI KALDI
+      async function takeScreenshot() {
+        console.log("AR fotoğrafı çekiliyor...");
+
+        const sceneEl = document.querySelector('a-scene');
+        if (!sceneEl) {
+          console.error("A-Frame sahnesi bulunamadı.");
+          alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
+          return;
+        }
+
+        const videoElement = document.querySelector('video');
+        if (!videoElement || videoElement.readyState < 2) {
+          console.error("Kamera video elementi bulunamadı veya hazır değil.");
+          alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
+          return;
+        }
+
+        const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
+        if (!arWebGLCanvas) {
+          console.error("A-Frame render canvas'ı bulunamadı.");
+          alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
+          return;
+        }
+
+        try {
+          videoElement.pause();
+
+          const combinedCanvas = document.createElement("canvas");
+          let captureWidth = videoElement.videoWidth;
+          let captureHeight = videoElement.videoHeight;
+
+          if (captureWidth === 0 || captureHeight === 0) {
+              console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
+              captureWidth = window.innerWidth;
+              captureHeight = window.innerHeight;
+          }
+
+          const resolutionMultiplier = 2;	
+
+          combinedCanvas.width = captureWidth * resolutionMultiplier;
+          combinedCanvas.height = captureHeight * resolutionMultiplier;
+
+          const ctx = combinedCanvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          
+          let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
+
+          if (!arCanvasForScreenshot) {
+              console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
+              alert("Fotoğraf çekilemedi: 3D model katmanı bulunamadı.");
+              return;
+          }
+
+          ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          
+          const screenshotDataURL = combinedCanvas.toDataURL('image/png');
+
+          if (screenshotDataURL === 'data:,') {
+            console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
+            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
+            return;
+          }
+
+          const link = document.createElement('a');
+          link.href = screenshotDataURL;
+          link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
+
+        } catch (error) {
+          console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
+          alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
+        } finally {
+            if (videoElement.paused) {
+                videoElement.play();
+            }
+        }
+      }
+
+      // AR sahnesini sıfırlama ve hedef arama moduna dönme
+      function resetARScene() {
+          console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
+          location.reload(); // Sayfayı yeniden yüklemek en temiz sıfırlama yoludur
+          
+          if (backgroundMusic && backgroundMusic.playing()) {
+              backgroundMusic.stop();
+              console.log("Howler.js sesi durduruldu.");
+          }
+      }
+    </script>
