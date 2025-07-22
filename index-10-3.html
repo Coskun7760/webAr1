@@ -46,25 +46,209 @@
      
     </style>
 
-    
+    <script>
+      var modelSound1 = new Howl({
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
+        volume: 1.0,
+        autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
+      });
+
+       AFRAME.registerComponent("mytarget", {
+    init: function () {
+        const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
+        const sceneEl = document.querySelector('a-scene');
+        const animatedModel = el.querySelector('a-gltf-model');
+        this.isModelAttachedToTarget = true; // Modelin şu anda hedefin içinde mi olduğunu takip eder.
+
+        // `init` fonksiyonu içindeki asenkron sorununu çözmek için `setTimeout` kullanıyoruz.
+        setTimeout(() => {
+            // targetIndex'i MindAR bileşeninin verisinden doğru şekilde alıyoruz.
+            const targetIndex = el.components['mindar-image-target'].data.targetIndex;
+
+            // Bu hedefe ait ses değişkenini bulma
+            let currentSound;
+            if (targetIndex === 0) {
+                currentSound = modelSound1;
+            } else if (targetIndex === 1) {
+                currentSound = modelSound2;
+            } else if (targetIndex === 2) {
+                currentSound = modelSound3;
+            }
+
+            // Hedef bulunduğunda
+            el.addEventListener("targetFound", (event) => {
+                console.log(`AR Hedefi ${targetIndex} algılandı!`);
+
+                // 1. Tüm diğer modelleri gizle ve sadece bu modeli göster.
+                document.querySelectorAll('a-gltf-model').forEach(model => {
+                    model.setAttribute('visible', false);
+                });
+
+                // 2. Model sahneye sabitlenmişse hedefe geri ekle.
+                if (!this.isModelAttachedToTarget) {
+                    console.log("Model hedefe geri ekleniyor.");
+                    sceneEl.object3D.remove(animatedModel.object3D);
+                    el.object3D.add(animatedModel.object3D);
+                    this.isModelAttachedToTarget = true;
+                    // Orijinal pozisyonunu hedefe göre ayarla
+                    animatedModel.setAttribute('position', '0 -0.5 0.1');
+                    animatedModel.setAttribute('rotation', '0 0 0');
+                    animatedModel.setAttribute('scale', '0.5 0.5 0.5');
+                }
+
+                // 3. Modeli görünür yap.
+                animatedModel.setAttribute('visible', true);
+
+                // 4. Tüm sesleri durdur ve sadece bu hedefin sesini başlat.
+                Howler.stop();
+                if (currentSound && !currentSound.playing()) {
+                    currentSound.play();
+                }
+            });
+
+            // Hedef kaybedildiğinde
+            el.addEventListener("targetLost", (event) => {
+                console.log(`AR Hedefi ${targetIndex} kaybedildi!`);
+
+                // Hedef kaybolunca modeli olduğu yerde sabitle
+                if (this.isModelAttachedToTarget) {
+                    console.log("Model sahneye sabitleniyor.");
+                    el.object3D.remove(animatedModel.object3D);
+                    sceneEl.object3D.add(animatedModel.object3D);
+                    // Modelin konumunu, rotasyonunu ve ölçeğini manuel olarak ayarla
+                    const setPositionVector = new THREE.Vector3(0, -75, -450);
+                    const setQuaternion = new THREE.Quaternion().identity();
+                    const setScaleVector = new THREE.Vector3(100, 100, 100);
+                    
+                    animatedModel.object3D.position.copy(setPositionVector);
+                    animatedModel.object3D.quaternion.copy(setQuaternion);
+                    animatedModel.object3D.scale.copy(setScaleVector);
+
+                    this.isModelAttachedToTarget = false;
+                }
+
+                // 5. Hedef kaybolduğunda ses çalmaya devam edecek, bu kısımda durdurmuyoruz.
+            });
+        }, 0);
+    },
+});
+		
+		
+
+      // Fotoğraf çekme fonksiyonu - AYNI KALDI
+      async function takeScreenshot() {
+        console.log("AR fotoğrafı çekiliyor...");
+
+        const sceneEl = document.querySelector('a-scene');
+        if (!sceneEl) {
+          console.error("A-Frame sahnesi bulunamadı.");
+          alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
+          return;
+        }
+
+        const videoElement = document.querySelector('video');
+        if (!videoElement || videoElement.readyState < 2) {
+          console.error("Kamera video elementi bulunamadı veya hazır değil.");
+          alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
+          return;
+        }
+
+        const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
+        if (!arWebGLCanvas) {
+          console.error("A-Frame render canvas'ı bulunamadı.");
+          alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
+          return;
+        }
+
+        try {
+          videoElement.pause();
+
+          const combinedCanvas = document.createElement("canvas");
+          let captureWidth = videoElement.videoWidth;
+          let captureHeight = videoElement.videoHeight;
+
+          if (captureWidth === 0 || captureHeight === 0) {
+              console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
+              captureWidth = window.innerWidth;
+              captureHeight = window.innerHeight;
+          }
+
+          const resolutionMultiplier = 2;	
+
+          combinedCanvas.width = captureWidth * resolutionMultiplier;
+          combinedCanvas.height = captureHeight * resolutionMultiplier;
+
+          const ctx = combinedCanvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          
+          let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
+
+          if (!arCanvasForScreenshot) {
+              console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
+              alert("Fotoğraf çekilemedi: 3D model katmanı bulunamadı.");
+              return;
+          }
+
+          ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          
+          const screenshotDataURL = combinedCanvas.toDataURL('image/png');
+
+          if (screenshotDataURL === 'data:,') {
+            console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
+            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
+            return;
+          }
+
+          const link = document.createElement('a');
+          link.href = screenshotDataURL;
+          link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
+
+        } catch (error) {
+          console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
+          alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
+        } finally {
+            if (videoElement.paused) {
+                videoElement.play();
+            }
+        }
+      }
+
+      // AR sahnesini sıfırlama ve hedef arama moduna dönme
+      function resetARScene() {
+			console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
+			location.reload(); // Sayfayı yeniden yüklemek en temiz sıfırlama yoludur
+
+			// KRİTİK DÜZELTME: Artık tüm sesleri durdurmak için Howler.stop() kullanıyoruz.
+			// Bu, hangi sesin çalıyor olursa olsun, hepsini durduracaktır.
+			Howler.stop();
+			console.log("Tüm Howler.js sesleri durduruldu.");
+      }
+    </script>
   </head>
   <body>
-	  
-	   	  
     <a-scene
       mindar-image="imageTargetSrc: ./targetsMulti.mind; filterMinCF:0.0001; filterBeta: 0.001;"
       vr-mode-ui="enabled: false"
 	  color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
       device-orientation-permission-ui="enabled: false"
       webgl-renderer="preserveDrawingBuffer: true;"  
-      screenshot="" 
-			  > 
+      screenshot="" > 
       <a-assets>
-        <a-asset-item id="model1" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
-		<a-asset-item id="model2" src="https://coskun7760.github.io/webAr1/muze-123.gltf"></a-asset-item> 
-		<a-asset-item id="model3" src="https://coskun7760.github.io/webAr1/muze-1234.gltf"></a-asset-item> 
+        <a-asset-item id="model1" src="https://coskun7760.github.io/webAr1/muze-12.gltf"> </a-asset-item>
+		<a-asset-item id="model2" src="https://coskun7760.github.io/webAr1/muze-123.gltf"> </a-asset-item> 
+		<a-asset-item id="model3" src="https://coskun7760.github.io/webAr1/muze-1234.gltf"> </a-asset-item> 
 		  
-        <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
+        <audio id="modelSound1" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
+		  
+		  
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -72,38 +256,41 @@
       <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
         <a-gltf-model
           id="animatedModel"
-		  rotation="0 0 0 "
+		  rotation="0 0 0"
           position="0 -0.5 0.1"
           scale="0.5 0.5 0.5"
           src="#model1"
           animation-mixer="timeScale: 1"
-          visible="true"> </a-gltf-model>
+          visible="false"> </a-gltf-model>
       </a-entity>
 		
 	 <a-entity id="mytarget1" mytarget mindar-image-target="targetIndex: 1">
         <a-gltf-model
           id="animatedModel1"
+		  rotation="0 0 0"
           position="0 -0.5 0.1"
           scale="0.5 0.5 0.5"
           src="#model2"
           animation-mixer="timeScale: 1"
-          visible="true"> </a-gltf-model>
+          visible="false"> </a-gltf-model>
       </a-entity>
 		
 		 <a-entity id="mytarget2" mytarget mindar-image-target="targetIndex: 2">
         <a-gltf-model
           id="animatedModel2"
+		  rotation="0 0 0"
           position="0 -0.5 0.1"
           scale="0.5 0.5 0.5"
           src="#model3"
           animation-mixer="timeScale: 1"
-          visible="true"> </a-gltf-model>
+          visible="false"> </a-gltf-model>
       </a-entity>
 		
 		
     </a-scene>
 
-    
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek  İnşaallah</button>
+    <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
 </html>

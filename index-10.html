@@ -68,7 +68,7 @@
           let mindarUiOverlay = null;
 		  // const targetIndex = el.getAttribute('mindar-image-target').targetIndex;
 			// Doğru Yöntem: targetIndex'i MindAR bileşeninin verisinden alıyoruz
-    	 
+    	 let backgroundMusic;
 			
           // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
           sceneEl.addEventListener('loaded', () => {
@@ -86,7 +86,7 @@
 			  
 				 const targetIndex = el.components['mindar-image-target'].data.targetIndex;
 			   // Bu hedefe ait ses değişkenini bulma
-				let backgroundMusic;
+				
 				if (targetIndex === 0) {
 					backgroundMusic = modelSound1;
 				} 
