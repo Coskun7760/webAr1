@@ -86,16 +86,7 @@
 				
           });		
 			
-			const targetIndex = el.components['mindar-image-target'].data.targetIndex;
-
-            
-            if (targetIndex === 0) {
-                backgroundMusic = modelSound1;
-            } else if (targetIndex === 1) {
-                backgroundMusic = null;
-            } else if (targetIndex === 2) {
-                backgroundMusic = null;
-            }
+			
 			
           // Hedef bulunduğunda
           el.addEventListener("targetFound", (event) => {
@@ -106,16 +97,18 @@
 			 const targetIndex = el.components['mindar-image-target'].data.targetIndex;
 			   // Bu hedefe ait ses değişkenini bulma
 				
-			/* if (targetIndex === 0) {
-					backgroundMusic = modelSound1;
-					console.log("target İndex   ");
-					console.log(targetIndex);
-				} 
-			  	else
-				{
-					backgroundMusic = null; 
-				}
-				*/
+			  
+
+            
+            if (targetIndex === 0) {
+                backgroundMusic = modelSound1;
+            } else if (targetIndex === 1) {
+                backgroundMusic = null;
+            } else if (targetIndex === 2) {
+                backgroundMusic = null;
+            }
+			  
+			 
             // 1. Hedef ilk bulunduğunda: 3D model görünsün ve müzik başlasın.
           /* if (!this.targetFoundOnce) {
                 if (backgroundMusic && !backgroundMusic.playing()) {
