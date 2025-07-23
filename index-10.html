@@ -105,7 +105,7 @@
 					backgroundMusic = null; 
 				}  
             // 1. Hedef ilk bulunduğunda: 3D model görünsün ve müzik başlasın.
-            if (!this.targetFoundOnce) {
+          /*  if (!this.targetFoundOnce) {
                 if (backgroundMusic && !backgroundMusic.playing()) {
                     backgroundMusic.play();
                     console.log("Howler.js sesi oynatılıyor.");
@@ -116,7 +116,11 @@
                     console.warn("Howler.js sesi başlatılamadı.");
                 }
                 this.targetFoundOnce = true;
-            }
+            }*/
+			 Howler.stop();
+                if (backgroundMusic && !backgroundMusic.playing()) {
+                    currentSound.play();
+                }
 
             // KRİTİK DÜZELTME: İlk olarak, sahnedeki TÜM 3D modelleri gizle
 			// Bu, önceki hedefin modelinin ekranda kalmasını engeller.
