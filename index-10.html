@@ -68,7 +68,7 @@
           let mindarUiOverlay = null;
 		 
     	  let backgroundMusic = null;
-			
+		  this.currentTarget = -1;
           // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
           sceneEl.addEventListener('loaded', () => {
               mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
@@ -89,9 +89,9 @@
 			
 			
           // Hedef bulunduğunda
-          el.addEventListener("targetFound", (event) => {
+          	el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
-
+			  
 			 // const targetIndex = el.getAttribute('mindar-image-target').targetIndex;
 			// Doğru Yöntem: targetIndex'i MindAR bileşeninin verisinden alıyoruz 
 			 const targetIndex = el.components['mindar-image-target'].data.targetIndex;
@@ -108,7 +108,23 @@
                 backgroundMusic = null;
             }
 			  
-			 
+			
+			
+			
+				
+		    if (backgroundMusic && (!backgroundMusic.playing() || (backgroundMusic.playing() && this.currentTarget!=targetIndex) ) {
+				Howler.stop(); 
+			 	backgroundMusic.play();
+			}
+			else if (!backgroundMusic)
+			{
+				Howler.stop(); 
+			}
+								
+			if (this.currentTarget!=targetIndex)
+			{
+				this.currentTarget = targetIndex;
+			}
             // 1. Hedef ilk bulunduğunda: 3D model görünsün ve müzik başlasın.
           /* if (!this.targetFoundOnce) {
                 if (backgroundMusic && !backgroundMusic.playing()) {
@@ -124,10 +140,7 @@
             }
 			*/  
 			  
-			  if (backgroundMusic && !backgroundMusic.playing()) {
-                    Howler.stop(); 
-                    backgroundMusic.play();
-                }
+			
 			  
             // KRİTİK DÜZELTME: İlk olarak, sahnedeki TÜM 3D modelleri gizle
 			// Bu, önceki hedefin modelinin ekranda kalmasını engeller.
