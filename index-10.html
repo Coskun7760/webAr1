@@ -52,6 +52,11 @@
         volume: 1.0,
         autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
       });
+ 	var modelSound2 = new Howl({
+        src: ['https://coskun7760.github.io/webAr1/ses1.mp3'],
+        volume: 1.0,
+        autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
+      });
 
       AFRAME.registerComponent("mytarget", {
         init: function () {
@@ -103,7 +108,7 @@
             if (targetIndex === 0) {
                 backgroundMusic = modelSound1;
             } else if (targetIndex === 1) {
-                backgroundMusic = null;
+                backgroundMusic = modelSound2;
             } else if (targetIndex === 2) {
                 backgroundMusic = null;
             }
