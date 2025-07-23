@@ -86,6 +86,17 @@
 				
           });		
 			
+			const targetIndex = el.components['mindar-image-target'].data.targetIndex;
+
+            
+            if (targetIndex === 0) {
+                backgroundMusic = modelSound1;
+            } else if (targetIndex === 1) {
+                backgroundMusic = null;
+            } else if (targetIndex === 2) {
+                backgroundMusic = null;
+            }
+			
           // Hedef bulunduğunda
           el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
@@ -95,7 +106,7 @@
 			 const targetIndex = el.components['mindar-image-target'].data.targetIndex;
 			   // Bu hedefe ait ses değişkenini bulma
 				
-				if (targetIndex === 0) {
+			/* if (targetIndex === 0) {
 					backgroundMusic = modelSound1;
 					console.log("target İndex   ");
 					console.log(targetIndex);
@@ -103,9 +114,10 @@
 			  	else
 				{
 					backgroundMusic = null; 
-				}  
+				}
+				*/
             // 1. Hedef ilk bulunduğunda: 3D model görünsün ve müzik başlasın.
-           if (!this.targetFoundOnce) {
+          /* if (!this.targetFoundOnce) {
                 if (backgroundMusic && !backgroundMusic.playing()) {
                     backgroundMusic.play();
                     console.log("Howler.js sesi oynatılıyor.");
@@ -117,10 +129,16 @@
                 }
                 this.targetFoundOnce = true;
             }
-			  /* Howler.stop();
-                if (backgroundMusic && !backgroundMusic.playing()) {
-                     backgroundMusic.play();
-                }*/
+			*/  
+			  
+			  if (backgroundMusic && !backgroundMusic.playing()) {
+                    Howler.stop(); 
+                    backgroundMusic.play();
+                }
+			  else				  
+			  	{
+					Howler.stop();
+				}
 
             // KRİTİK DÜZELTME: İlk olarak, sahnedeki TÜM 3D modelleri gizle
 			// Bu, önceki hedefin modelinin ekranda kalmasını engeller.
@@ -155,7 +173,7 @@
 
             // 2. Hedef kaybolduğunda (kameradan çıkınca): 3D model olduğu yerde sabit kalsın (kaybolmasın).
             // Hedef daha önce algılandıysa VE model hala hedefe bağlıysa, sahneye taşı
-            if (this.targetFoundOnce && this.isModelAttachedToTarget) {
+            if (this.isModelAttachedToTarget) {
                 console.log("Model sahneye sabitleniyor.");
                 // Modelin mevcut dünya konumunu, rotasyonunu ve ölçeğini al
                /* const currentWorldPos = new THREE.Vector3();
