@@ -209,102 +209,135 @@
       });
 		
 	
-      // Fotoğraf çekme fonksiyonu - GÜNCELLENDİ
-		async function takeScreenshot() {
-		  console.log("AR fotoğrafı çekiliyor...");
+   // Fotoğraf çekme fonksiyonu - DİKEY MOD İÇİN GÜNCELLENDİ
+async function takeScreenshot() {
+    console.log("AR fotoğrafı çekiliyor...");
 
-		  const sceneEl = document.querySelector('a-scene');
-		  if (!sceneEl) {
-			console.error("A-Frame sahnesi bulunamadı.");
-			alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
-			return;
-		  }
+    const sceneEl = document.querySelector('a-scene');
+    if (!sceneEl) {
+        console.error("A-Frame sahnesi bulunamadı.");
+        alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
+        return;
+    }
 
-		  const videoElement = document.querySelector('video');
-		  if (!videoElement || videoElement.readyState < 2) {
-			console.error("Kamera video elementi bulunamadı veya hazır değil.");
-			alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
-			return;
-		  }
+    const videoElement = document.querySelector('video');
+    if (!videoElement || videoElement.readyState < 2) {
+        console.error("Kamera video elementi bulunamadı veya hazır değil.");
+        alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
+        return;
+    }
 
-		  const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
-		  if (!arWebGLCanvas) {
-			console.error("A-Frame render canvas'ı bulunamadı.");
-			alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
-			return;
-		  }
+    const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
+    if (!arWebGLCanvas) {
+        console.error("A-Frame render canvas'ı bulunamadı.");
+        alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
+        return;
+    }
 
-		  try {
-			videoElement.pause();
+    try {
+        videoElement.pause();
 
-			const combinedCanvas = document.createElement("canvas");
+        const combinedCanvas = document.createElement("canvas");
+        const resolutionMultiplier = 2; // Yüksek çözünürlük için çarpan
 
-			// Kameranın gerçek video boyutlarını al
-			let videoWidth = videoElement.videoWidth;
-			let videoHeight = videoElement.videoHeight;
+        let videoWidth = videoElement.videoWidth;
+        let videoHeight = videoElement.videoHeight;
 
-			// Eğer video boyutları alınamıyorsa (bazen başlangıçta 0 olabilir), varsayılan olarak ekran boyutlarını kullan
-			// Ama önemli olan, bu boyutlara göre oranları ayarlamak.
-			if (videoWidth === 0 || videoHeight === 0) {
-				console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
-				videoWidth = window.innerWidth;
-				videoHeight = window.innerHeight;
-			}
+        // *** TEŞHİS İÇİN EKLENDİ ***
+        console.log(`Video Element Gerçek Boyutları (Ham): ${videoWidth}x${videoHeight}`);
+        console.log(`Window Inner Boyutları: ${window.innerWidth}x${window.innerHeight}`);
 
-			// Yüksek çözünürlük için çarpan (bu aynı kalabilir)
-			const resolutionMultiplier = 2;
+        if (videoWidth === 0 || videoHeight === 0) {
+            console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
+            videoWidth = window.innerWidth;
+            videoHeight = window.innerHeight;
+        }
 
-			// Canvas boyutlarını video akışının orijinal en boy oranını koruyarak ayarla
-			combinedCanvas.width = videoWidth * resolutionMultiplier;
-			combinedCanvas.height = videoHeight * resolutionMultiplier;
+        // Cihazın mevcut yönünü (portrait/landscape) belirlemeye çalışalım
+        // Eğer cihaz dikeyde (portrait) ise ve video genişliği yükseklikten büyükse (ki genelde böyledir),
+        // o zaman canvas boyutlarını değiştirmemiz ve videoyu döndürmemiz gerekecek.
+        // `window.orientation` artık tavsiye edilmese de, mobil tarayıcılarda hala kullanılabilir.
+        // Daha modern bir yaklaşım `screen.orientation.angle` veya `matchMedia` olabilir,
+        // ancak çoğu durumda bu basit kontrol işe yarar.
 
-			const ctx = combinedCanvas.getContext('2d');
-			ctx.imageSmoothingEnabled = true;
-			ctx.imageSmoothingQuality = 'high';
+        let canvasDrawWidth = videoWidth;
+        let canvasDrawHeight = videoHeight;
+        let rotationAngle = 0; // 0, 90, 180, 270 derece
 
-			// Video akışını canvas'a çiz
-			// Burada videoWidth ve videoHeight kullanarak tam ve doğru oranı koruyoruz.
-			ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
+        // Telefon dikeyde tutuluyorsa ve video yatay akış veriyorsa (ki genelde verir)
+        const isPortrait = window.innerHeight > window.innerWidth; // Tarayıcı penceresi dikeyde mi?
 
-			// A-Frame'in AR içeriğini içeren canvas'ı al
-			let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
+        if (isPortrait && videoWidth > videoHeight) { // Cihaz dikeyde ve video yatay geliyor (yaygın durum)
+            console.log("Dikey mod algılandı, video akışı döndürülüyor.");
+            canvasDrawWidth = videoHeight; // Canvas genişliği videonun yüksekliği olacak
+            canvasDrawHeight = videoWidth; // Canvas yüksekliği videonun genişliği olacak
+            rotationAngle = 90; // Video 90 derece döndürülecek
+        } else {
+            console.log("Yatay mod veya dikey modda zaten doğru akış algılandı.");
+        }
 
-			if (!arCanvasForScreenshot) {
-				console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
-				alert("Fotoğraf çekilemedi: 3D model katmanı bulunamadı.");
-				return;
-			}
+        combinedCanvas.width = canvasDrawWidth * resolutionMultiplier;
+        combinedCanvas.height = canvasDrawHeight * resolutionMultiplier;
 
-			// AR içeriğini de aynı boyutlara göre canvas'a çiz
-			ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
+        console.log(`Oluşturulan Canvas Boyutları: ${combinedCanvas.width}x${combinedCanvas.height}`);
 
-			const screenshotDataURL = combinedCanvas.toDataURL('image/png');
+        const ctx = combinedCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
-			if (screenshotDataURL === 'data:,') {
-			  console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
-			  alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
-			  return;
-			}
+        // Canvas'ı döndürme işlemleri
+        ctx.save(); // Mevcut canvas durumunu kaydet
+        if (rotationAngle !== 0) {
+            ctx.translate(combinedCanvas.width / 2, combinedCanvas.height / 2); // Merkeze taşı
+            ctx.rotate(rotationAngle * Math.PI / 180); // Döndür (radyan cinsinden)
+            // Döndürmeden sonra görüntüyü çizmek için negatif translasyon
+            ctx.drawImage(videoElement, -combinedCanvas.height / 2, -combinedCanvas.width / 2, combinedCanvas.height, combinedCanvas.width);
+        } else {
+            ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
+        }
+        ctx.restore(); // Kaydedilmiş canvas durumuna geri dön
 
-			const link = document.createElement('a');
-			link.href = screenshotDataURL;
-			link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
+        // A-Frame'in AR içeriğini içeren canvas'ı al
+        let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
 
-			console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
+        if (!arCanvasForScreenshot) {
+            console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
+            alert("Fotoğraf çekilemedi: 3D model katmanı bulunamadı.");
+            return;
+        }
+        console.log(`AR Canvas (A-Frame) Boyutları: ${arCanvasForScreenshot.width}x${arCanvasForScreenshot.height}`);
 
-		  } catch (error) {
-			console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
-			alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
-		  } finally {
-			  if (videoElement.paused) {
-				  videoElement.play();
-			  }
-		  }
-		}
+        // AR içeriğini de aynı döndürülmüş ve ölçeklenmiş canvas'a çiz.
+        // Buradaki önemli nokta, AR canvas'ın genellikle MindAR tarafından zaten doğru yönde render edildiği varsayılır.
+        // Eğer AR içeriği hala basık çıkarsa, AR canvas'ı da döndürmek gerekebilir, ancak bu daha karmaşıktır.
+        // İlk olarak sadece arka plan videosunu düzelterek test edelim.
+        ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
+        
+        const screenshotDataURL = combinedCanvas.toDataURL('image/png');
 
+        if (screenshotDataURL === 'data:,') {
+            console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
+            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
+        }
+
+        const link = document.createElement('a');
+        link.href = screenshotDataURL;
+        link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
+
+    } catch (error) {
+        console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
+        alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
+    } finally {
+        if (videoElement.paused) {
+            videoElement.play();
+        }
+    }
+}
       // AR sahnesini sıfırlama ve hedef arama moduna dönme
       function resetARScene() {
 			console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
