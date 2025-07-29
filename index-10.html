@@ -209,7 +209,7 @@
       });
 		
 	
-     async function takeScreenshot() {
+  async function takeScreenshot() {
     console.log("AR fotoğrafı çekiliyor...");
 
     const sceneEl = document.querySelector('a-scene');
@@ -226,8 +226,7 @@
         return;
     }
 
-    // A-Frame render canvas'ı kontrolü
-    // Bu kontrol genellikle render edilen 3D içeriği alırken önemlidir.
+    // A-Frame render canvas'ı (AR içeriğini doğrudan render eden WebGL canvas'ı)
     const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
     if (!arWebGLCanvas) {
         console.error("A-Frame render canvas'ı bulunamadı.");
@@ -239,61 +238,115 @@
         videoElement.pause();
 
         const combinedCanvas = document.createElement("canvas");
-        let videoWidth = videoElement.videoWidth;
-        let videoHeight = videoElement.videoHeight;
 
-        // Video gerçek piksel boyutları alınamazsa viewport boyutlarını kullan,
-        // ancak daha önemlisi en boy oranını korumak için bir fallback sağla.
-        if (videoWidth === 0 || videoHeight === 0) {
-            console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor ancak bu durum en boy oranı sorunlarına yol açabilir.");
-            videoWidth = window.innerWidth;
-            videoHeight = window.innerHeight;
+        // Kameranın doğal video boyutları
+        let videoNativeWidth = videoElement.videoWidth;
+        let videoNativeHeight = videoElement.videoHeight;
+
+        // Eğer videoNativeWidth veya videoNativeHeight 0 ise, bu genellikle video akışının henüz başlamadığı veya sorunlu olduğu anlamına gelir.
+        // Bu durumda, bir fallback olarak tarayıcı viewport boyutlarını kullanabiliriz, ancak bu ideal değildir ve en boy oranı sorunlarına yol açabilir.
+        if (videoNativeWidth === 0 || videoNativeHeight === 0) {
+            console.warn("Video gerçek piksel boyutları alınamadı. Viewport boyutları kullanılıyor. Bu durum en boy oranı sorunlarına neden olabilir.");
+            videoNativeWidth = window.innerWidth;
+            videoNativeHeight = window.innerHeight;
         }
 
-        const aspectRatio = videoWidth / videoHeight;
-        const resolutionMultiplier = 2; // Çözünürlük çarpanı
-
-        // Hedef canvas boyutlarını video en boy oranına göre ayarla
-        let targetWidth = videoWidth * resolutionMultiplier;
-        let targetHeight = videoHeight * resolutionMultiplier;
-
-        // Dikey ekran için özellikle: video en boy oranını koruyarak ekran boyutuna uygun hale getirme
-        // Eğer cihaz dikeyse ve video yataysa veya tam tersiyse, bu ayarlama önemlidir.
-        // Genellikle MindAR, kamera akışını tam ekran yapar, bu nedenle video elementinin boyutları önemlidir.
-        // Bu kısım, cihazın yönüne göre farklılık gösterebilir ve test edilmesi gerekebilir.
-        if (window.innerHeight > window.innerWidth) { // Cihaz dikey modda ise
-             // Hedef genişliği ekran genişliğine göre ayarla ve yüksekliği en boy oranına göre hesapla
-            targetWidth = window.innerWidth * resolutionMultiplier;
-            targetHeight = targetWidth / aspectRatio; // Video en boy oranını koru
-        } else { // Cihaz yatay modda ise
-            // Hedef yüksekliği ekran yüksekliğine göre ayarla ve genişliği en boy oranına göre hesapla
-            targetHeight = window.innerHeight * resolutionMultiplier;
-            targetWidth = targetHeight * aspectRatio; // Video en boy oranını koru
-        }
-
-
-        combinedCanvas.width = targetWidth;
-        combinedCanvas.height = targetHeight;
-
-        const ctx = combinedCanvas.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-
-        // Video görüntüsünü canvas'a çiz (en boy oranını koruyarak sığdır)
-        ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
-
-        // A-Frame screenshot bileşeninden 3D model canvas'ını al
+        // A-Frame'in aldığı ekran görüntüsü canvas'ının doğal boyutları
+        // A-Frame'in screenshot bileşeni genellikle render edilen viewport boyutunu kullanır.
         let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
-
         if (!arCanvasForScreenshot) {
             console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
             alert("Fotoğraf çekilemedi: 3D model katmanı bulunamadı.");
             return;
         }
 
-        // AR içeriğini de aynı boyut ve konumda çiz
-        // Burada da AR canvas'ının en boy oranı korunarak çizilmesi önemli
+        // --- Boyutlandırma Stratejisi ---
+        // En iyi sonuç için, hem video hem de AR canvas'ının en boy oranını koruyarak
+        // her ikisini de aynı "maksimum" alana sığdırmalıyız.
+        // Telefon dikeyken, genellikle genişlik sabittir ve yükseklik değişir.
+
+        // Kamera video elementinin en boy oranı
+        const videoAspectRatio = videoNativeWidth / videoNativeHeight;
+
+        // A-Frame render canvas'ının en boy oranı
+        // Genellikle A-Frame canvas'ı tarayıcı viewport'una göre ölçeklenir.
+        const arCanvasWidth = arCanvasForScreenshot.width;
+        const arCanvasHeight = arCanvasForScreenshot.height;
+        const arCanvasAspectRatio = arCanvasWidth / arCanvasHeight;
+
+        // Hedeflenen birleştirilmiş canvas'ın boyutlarını belirleme.
+        // Telefonun ekran boyutlarına daha yakın bir boyutlandırma deneyelim.
+        // Genellikle MindAR kamera akışını tam ekran yapar.
+        // Bu yüzden video native boyutlarını temel almak mantıklı.
+
+        let targetWidth = videoNativeWidth;
+        let targetHeight = videoNativeHeight;
+
+        // Telefonun mevcut yönünü kontrol et ve boyutları buna göre ayarla
+        // Amacımız, görüntüyü telefonun ekranında bozulmadan göründüğü gibi yakalamak.
+        // Eğer video ve ekranın en boy oranı uyumlu değilse, sıkıştırma veya siyah boşluklar oluşabilir.
+
+        // Basıklık sorunu dikey modda daha belirgin olduğundan,
+        // genişliği ekran genişliğine sabitleyip yüksekliği en boy oranına göre hesaplamak
+        // veya tam tersi daha iyi sonuç verebilir.
+
+        // Buradaki anahtar, hangi boyutun "dominant" olduğunu belirlemek ve diğerini ona göre ölçeklemektir.
+        // Genellikle kamera akışı, ekranın tamamını kaplar (cover).
+        // Bu durumda, birleştirilmiş canvas'ın boyutları, görünürdeki video alanıyla eşleşmelidir.
+
+        // Genişliği viewport genişliği * resolutionMultiplier olarak alalım
+        // Yüksekliği de bu genişliğe göre video en boy oranını koruyarak hesaplayalım.
+        const resolutionMultiplier = 2; // Daha yüksek çözünürlük için
+
+        combinedCanvas.width = window.innerWidth * resolutionMultiplier;
+        combinedCanvas.height = combinedCanvas.width / videoAspectRatio; // Video en boy oranını koru
+
+        // Ancak bu, videoHeight'ın window.innerHeight'ten küçük olduğu durumlarda siyah boşluklara yol açabilir.
+        // Eğer video elementinin CSS ile object-fit: cover; olarak ayarlandığını varsayarsak,
+        // video, tarayıcı penceresinin tamamını kaplayacak ve bazı kısımları kırpılacaktır.
+        // Bu durumda, yakalamamız gereken alan, görüntülenen video alanıdır.
+
+        // Daha güvenli bir yaklaşım: combinedCanvas'ı doğrudan tarayıcı penceresi boyutlarına göre ayarlayıp,
+        // video ve AR görüntüsünü bu canvas'a "cover" mantığıyla çizmek.
+        // Bu, görüntüyü tarayıcıda göründüğü şekliyle yakalar.
+
+        combinedCanvas.width = window.innerWidth * resolutionMultiplier;
+        combinedCanvas.height = window.innerHeight * resolutionMultiplier;
+
+        const ctx = combinedCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // Video görüntüsünü canvas'a "object-fit: cover" benzeri bir yaklaşımla çiz
+        // Video'nun en boy oranını ve canvas'ın en boy oranını karşılaştır.
+        // Görüntüyü canvas'ı tamamen dolduracak şekilde ölçekle, gerekiyorsa kırp.
+        const canvasAspectRatio = combinedCanvas.width / combinedCanvas.height;
+
+        let videoDrawWidth;
+        let videoDrawHeight;
+        let videoDrawX = 0;
+        let videoDrawY = 0;
+
+        if (videoAspectRatio > canvasAspectRatio) {
+            // Video daha geniş, yüksekliği sabitle, genişliği hesapla ve kırp
+            videoDrawHeight = combinedCanvas.height;
+            videoDrawWidth = videoDrawHeight * videoAspectRatio;
+            videoDrawX = (combinedCanvas.width - videoDrawWidth) / 2; // Merkezle
+        } else {
+            // Video daha uzun, genişliği sabitle, yüksekliği hesapla ve kırp
+            videoDrawWidth = combinedCanvas.width;
+            videoDrawHeight = videoDrawWidth / videoAspectRatio;
+            videoDrawY = (combinedCanvas.height - videoDrawHeight) / 2; // Merkezle
+        }
+        ctx.drawImage(videoElement, videoDrawX, videoDrawY, videoDrawWidth, videoDrawHeight);
+
+
+        // AR içeriğini de aynı şekilde çiz. A-Frame canvas'ı zaten ekran boyutunda render ediliyor olmalı.
+        // Dolayısıyla onu doğrudan canvas boyutlarına sığdırmak mantıklı.
+        // Ancak eğer A-Frame'in render ettiği alanın da en boy oranı sorunluysa, bu kısım da yeniden ayarlanmalı.
+        // Genellikle A-Frame, tam ekran bir WebGL canvas'ına render eder, bu yüzden basit çizim yeterli olabilir.
         ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
+
 
         const screenshotDataURL = combinedCanvas.toDataURL('image/png');
 
@@ -389,7 +442,7 @@
 		
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek 5 İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek 1 İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
