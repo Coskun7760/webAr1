@@ -391,7 +391,7 @@
     <a-scene
       mindar-image="imageTargetSrc: ./targetsMulti.mind; filterMinCF:0.0001; filterBeta: 0.001;"
       vr-mode-ui="enabled: false"
-	  color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
+	  color-space="sRGB" renderer="antialias: true; precision: high; alpha: true; logarithmicDepthBuffer: true;"
       device-orientation-permission-ui="enabled: false"
       webgl-renderer="preserveDrawingBuffer: true;"  
       screenshot="" > 
