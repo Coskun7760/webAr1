@@ -209,9 +209,9 @@
       });
 		
 	
-// Fotoğraf çekme fonksiyonu - SADECE DİKEY DURUŞ İÇİN OPTİMİZE EDİLDİ
+// Fotoğraf çekme fonksiyonu - VİDEO VE AR MODEL İÇİN DİKEY-YATAY DÜZELTMELERİ
 async function takeScreenshot() {
-    console.log("AR fotoğrafı çekiliyor (Sadece Dikey Mod).");
+    console.log("AR fotoğrafı çekiliyor (Video ve Model için optimize ediliyor)...");
 
     const sceneEl = document.querySelector('a-scene');
     if (!sceneEl) {
@@ -243,79 +243,108 @@ async function takeScreenshot() {
         ctx.imageSmoothingQuality = 'high';
 
         // Kameranın raporladığı ham video boyutları
-        let videoWidth = videoElement.videoWidth;
-        let videoHeight = videoElement.videoHeight;
+        let videoNativeWidth = videoElement.videoWidth;
+        let videoNativeHeight = videoElement.videoHeight;
 
-        console.log(`Ham Video Boyutları (videoElement): ${videoWidth}x${videoHeight}`);
+        // A-Frame/MindAR WebGL canvas'ının boyutları
+        let arCanvasWidth = arWebGLCanvas.width;
+        let arCanvasHeight = arWebGLCanvas.height;
 
-        // Eğer video boyutları alınamadıysa (0 ise), ekran boyutlarını varsay
-        if (videoWidth === 0 || videoHeight === 0) {
-            console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
-            videoWidth = window.innerWidth;
-            videoHeight = window.innerHeight;
+        console.log(`Video Ham Boyutları: ${videoNativeWidth}x${videoNativeHeight}`);
+        console.log(`AR WebGL Canvas Boyutları: ${arCanvasWidth}x${arCanvasHeight}`);
+        console.log(`Pencere Boyutları: ${window.innerWidth}x${window.innerHeight}`);
+
+        // Eğer video/ar boyutları alınamıyorsa (0 ise), pencere boyutlarını varsay
+        if (videoNativeWidth === 0 || videoNativeHeight === 0) {
+            console.warn("Video gerçek piksel boyutları alınamadı. Pencere boyutları varsayılıyor.");
+            videoNativeWidth = window.innerWidth;
+            videoNativeHeight = window.innerHeight;
+        }
+        if (arCanvasWidth === 0 || arCanvasHeight === 0) {
+            console.warn("AR Canvas boyutları alınamadı. Pencere boyutları varsayılıyor.");
+            arCanvasWidth = window.innerWidth;
+            arCanvasHeight = window.innerHeight;
+        }
+
+
+        let targetCanvasWidth = videoNativeWidth;
+        let targetCanvasHeight = videoNativeHeight;
+        let rotationAngle = 0; // Radyan cinsinden
+
+        // --- Yönlendirme ve En Boy Oranı Düzeltmesi ---
+        // Telefonun dikeyde olup olmadığını belirlemek için pencere boyutlarını kullanmak daha güvenilir olabilir.
+        const isDevicePortrait = window.innerHeight > window.innerWidth;
+
+        // Eğer cihaz dikeyde ve video akışı yatay geliyorsa (ki bu en yaygın senaryodur)
+        if (isDevicePortrait && videoNativeWidth > videoNativeHeight) {
+            console.log("Cihaz dikeyde, video akışı yatay geliyor. Döndürme uygulanıyor.");
+            rotationAngle = Math.PI / 2; // 90 derece döndür
+            targetCanvasWidth = videoNativeHeight; // Canvas genişliği videonun yüksekliği olacak
+            targetCanvasHeight = videoNativeWidth; // Canvas yüksekliği videonun genişliği olacak
+        } else {
+            console.log("Cihaz yatayda veya video akışı zaten dikey.");
         }
 
         const resolutionMultiplier = 2; // Yüksek çözünürlük için çarpan
 
-        let canvasTargetWidth = videoWidth;
-        let canvasTargetHeight = videoHeight;
-        let rotationAngle = 0; // Döndürme açısı (radyan)
+        combinedCanvas.width = targetCanvasWidth * resolutionMultiplier;
+        combinedCanvas.height = targetCanvasHeight * resolutionMultiplier;
 
-        // Dikey duruşta basıklığı düzeltmek için:
-        // Eğer video akışı yatay formatta geliyorsa (genişlik > yükseklik)
-        // Ki telefon dikey tutulduğunda genellikle durum budur.
-        if (videoWidth > videoHeight) {
-            console.log("Dikey modda video akışı yatay geliyor. Döndürme uygulanıyor.");
-            rotationAngle = Math.PI / 2; // 90 derece döndür
-            canvasTargetWidth = videoHeight; // Canvas genişliği videonun yüksekliği olacak
-            canvasTargetHeight = videoWidth; // Canvas yüksekliği videonun genişliği olacak
-        }
+        console.log(`Hesaplanan Nihai Canvas Boyutları: ${combinedCanvas.width}x${combinedCanvas.height}`);
 
-        combinedCanvas.width = canvasTargetWidth * resolutionMultiplier;
-        combinedCanvas.height = canvasTargetHeight * resolutionMultiplier;
-
-        console.log(`Hesaplanan Canvas Boyutları: ${combinedCanvas.width}x${combinedCanvas.height}`);
-
+        // --- Video Katmanını Çiz ---
         ctx.save(); // Mevcut canvas durumunu kaydet
-
         if (rotationAngle !== 0) {
-            // Canvas'ı döndürme noktasına taşı (merkeze)
-            ctx.translate(combinedCanvas.width / 2, combinedCanvas.height / 2);
-            ctx.rotate(rotationAngle); // Döndürme uygula
-            // Döndürülen canvas'a video akışını çiz
-            // drawImage parametreleri yeni (döndürülmüş) koordinat sistemine göre ayarlanır
-            ctx.drawImage(videoElement, 
-                          -combinedCanvas.height / 2, // Yeni X pozisyonu (yarım yükseklik kadar sola)
-                          -combinedCanvas.width / 2,  // Yeni Y pozisyonu (yarım genişlik kadar yukarı)
-                          combinedCanvas.height,      // Yeni genişlik (eski yükseklik)
-                          combinedCanvas.width        // Yeni yükseklik (eski genişlik)
+            ctx.translate(combinedCanvas.width / 2, combinedCanvas.height / 2); // Merkeze taşı
+            ctx.rotate(rotationAngle); // Döndür
+            ctx.drawImage(videoElement,
+                          -combinedCanvas.height / 2, // Yeni X konumu
+                          -combinedCanvas.width / 2,  // Yeni Y konumu
+                          combinedCanvas.height,      // Yeni çizim genişliği (döndürülmüş video için)
+                          combinedCanvas.width        // Yeni çizim yüksekliği (döndürülmüş video için)
                          );
         } else {
-            // Döndürme yoksa normal çiz
             ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
         }
         ctx.restore(); // Kaydedilmiş canvas durumuna geri dön
 
-        // A-Frame'in AR içeriğini içeren canvas'ı al
-        let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
+        // --- AR Model Katmanını Çiz ---
+        // AR canvas'ının kendi en boy oranını hesaplayalım
+        const arAspectRatio = arCanvasWidth / arCanvasHeight;
+        const targetAspectRatio = combinedCanvas.width / combinedCanvas.height;
 
-        if (!arCanvasForScreenshot) {
-            console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
-            alert("Fotoğraf çekilemedi: 3D model katmanı bulunamadı.");
-            return;
+        let arDrawWidth = combinedCanvas.width;
+        let arDrawHeight = combinedCanvas.height;
+        let arDrawX = 0;
+        let arDrawY = 0;
+
+        // AR Canvas'ı, birleştirilmiş canvas'a sığdırmak için boyutları ayarlayalım
+        // Orijinal AR canvas'ının oranı ile hedef canvas'ın oranını karşılaştır
+        if (arAspectRatio > targetAspectRatio) {
+            // AR canvas daha geniş, yüksekliği sabitleyip genişliği ayarla
+            arDrawHeight = combinedCanvas.height;
+            arDrawWidth = arDrawHeight * arAspectRatio;
+            arDrawX = (combinedCanvas.width - arDrawWidth) / 2; // Ortala
+        } else {
+            // AR canvas daha uzun, genişliği sabitleyip yüksekliği ayarla
+            arDrawWidth = combinedCanvas.width;
+            arDrawHeight = arDrawWidth / arAspectRatio;
+            arDrawY = (combinedCanvas.height - arDrawHeight) / 2; // Ortala
         }
-        console.log(`AR Canvas (A-Frame) Boyutları: ${arCanvasForScreenshot.width}x${arCanvasForScreenshot.height}`);
 
-        // AR içeriğini de canvas'a çiz.
-        // A-Frame'in WebGL canvas'ı genellikle video ile aynı yönelimde ve boyutta olduğu için,
-        // onu doğrudan hesapladığımız final canvas boyutlarına sığdırıyoruz.
-        ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
+        console.log(`AR Canvas Çizim Boyutları: ${arDrawWidth.toFixed(2)}x${arDrawHeight.toFixed(2)} @ (${arDrawX.toFixed(2)}, ${arDrawY.toFixed(2)})`);
+
+        // AR içeriğini birleştirilmiş canvas'a çiz.
+        // Burada tekrar bir döndürme yapmıyoruz çünkü MindAR'ın WebGL çıktısının
+        // zaten doğru yönelimde olduğu varsayılır. Sadece boyutu ve konumu ayarla.
+        ctx.drawImage(arWebGLCanvas, arDrawX, arDrawY, arDrawWidth, arDrawHeight);
         
         const screenshotDataURL = combinedCanvas.toDataURL('image/png');
 
         if (!screenshotDataURL || screenshotDataURL === 'data:,') {
-            console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
-            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
+            console.warn("Çekilen fotoğraf boş veya geçersiz. Görüntü yakalanamadı. Kamera veya modelin görünür olduğundan emin olun.");
+            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı.");
+            return;
         }
 
         const link = document.createElement('a');
