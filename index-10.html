@@ -209,9 +209,9 @@
       });
 		
 	
-// Fotoğraf çekme fonksiyonu - A-FRAME'İN DAHİLİ EKRAN GÖRÜNTÜSÜ ALMA METODU
+ // Fotoğraf çekme fonksiyonu - A-FRAME'İN CANVAS'INI KULLANARAK DÜZELTME
 async function takeScreenshot() {
-    console.log("AR fotoğrafı çekiliyor (A-Frame'in dahili metodunu kullanarak).");
+    console.log("AR fotoğrafı çekiliyor (A-Frame canvas'ı üzerinden).");
 
     const sceneEl = document.querySelector('a-scene');
     if (!sceneEl) {
@@ -221,7 +221,6 @@ async function takeScreenshot() {
     }
 
     // A-Frame'in screenshot bileşeninin var olduğundan emin olalım
-    // HTML'deki <a-scene> etiketinde screenshot="" olmalı
     if (!sceneEl.components.screenshot) {
         console.error("HATA: A-Frame 'screenshot' bileşeni sahnede etkin değil. Lütfen <a-scene> etiketine screenshot='' ekleyin.");
         alert("Fotoğraf çekilemedi: A-Frame ekran görüntüsü bileşeni eksik.");
@@ -229,14 +228,23 @@ async function takeScreenshot() {
     }
 
     try {
-        // MindAR'ın dahili video elementini duraklatmaya gerek yok.
-        // A-Frame'in screenshot bileşeni zaten her şeyi doğru yakalayacaktır.
+        // A-Frame'in dahili video elementini duraklatmaya gerek yok.
+        // MindAR ve A-Frame zaten her şeyi WebGL canvas üzerinde yönetiyor.
 
-        // A-Frame'in screenshot bileşeni üzerinden doğrudan görüntü alıyoruz.
+        // A-Frame'in screenshot bileşeninden doğrudan WebGL canvas'ını alıyoruz.
         // 'perspective' modu, 3D içeriği de içeren kamera bakış açısını yakalar.
-        // MindAR arka plan videosunu WebGL dokusu olarak render ettiğinden,
-        // bu metodun hem videoyu hem de 3D modeli doğru en boy oranıyla yakalaması gerekir.
-        const screenshotDataURL = sceneEl.components.screenshot.getImage('perspective');
+        // MindAR arka plan videosunu bu canvas'ın üzerine çizdiği için,
+        // bu canvas hem videoyu hem de 3D modeli içerecektir.
+        const arScreenshotCanvas = sceneEl.components.screenshot.getCanvas('perspective');
+
+        if (!arScreenshotCanvas) {
+            console.error("HATA: A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
+            alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
+            return;
+        }
+
+        // Canvas'ı resim verisine dönüştür
+        const screenshotDataURL = arScreenshotCanvas.toDataURL('image/png');
 
         if (!screenshotDataURL || screenshotDataURL === 'data:,') {
             console.warn("Çekilen fotoğraf boş veya geçersiz. Görüntü yakalanamadı. Kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
@@ -251,13 +259,11 @@ async function takeScreenshot() {
         link.click();
         document.body.removeChild(link);
 
-        console.log("AR fotoğrafı başarıyla alındı ve indirildi (A-Frame'in birleşik görüntüsü).");
+        console.log("AR fotoğrafı başarıyla alındı ve indirildi (A-Frame'in birleşik canvas'ından).");
 
     } catch (error) {
         console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
         alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
-    } finally {
-        // Video akışını manuel olarak başlatmaya gerek yok, MindAR yönetiyor.
     }
 }
       // AR sahnesini sıfırlama ve hedef arama moduna dönme
