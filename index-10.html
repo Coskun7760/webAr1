@@ -209,63 +209,92 @@
       });
 		
 	
- // Fotoğraf çekme fonksiyonu - A-FRAME'İN CANVAS'INI KULLANARAK DÜZELTME
-async function takeScreenshot() {
-    console.log("AR fotoğrafı çekiliyor (A-Frame canvas'ı üzerinden).");
+     // Fotoğraf çekme fonksiyonu - AYNI KALDI
+      async function takeScreenshot() {
+        console.log("AR fotoğrafı çekiliyor...");
 
-    const sceneEl = document.querySelector('a-scene');
-    if (!sceneEl) {
-        console.error("HATA: A-Frame sahnesi bulunamadı.");
-        alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
-        return;
-    }
-
-    // A-Frame'in screenshot bileşeninin var olduğundan emin olalım
-    if (!sceneEl.components.screenshot) {
-        console.error("HATA: A-Frame 'screenshot' bileşeni sahnede etkin değil. Lütfen <a-scene> etiketine screenshot='' ekleyin.");
-        alert("Fotoğraf çekilemedi: A-Frame ekran görüntüsü bileşeni eksik.");
-        return;
-    }
-
-    try {
-        // A-Frame'in dahili video elementini duraklatmaya gerek yok.
-        // MindAR ve A-Frame zaten her şeyi WebGL canvas üzerinde yönetiyor.
-
-        // A-Frame'in screenshot bileşeninden doğrudan WebGL canvas'ını alıyoruz.
-        // 'perspective' modu, 3D içeriği de içeren kamera bakış açısını yakalar.
-        // MindAR arka plan videosunu bu canvas'ın üzerine çizdiği için,
-        // bu canvas hem videoyu hem de 3D modeli içerecektir.
-        const arScreenshotCanvas = sceneEl.components.screenshot.getCanvas('perspective');
-
-        if (!arScreenshotCanvas) {
-            console.error("HATA: A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
-            alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
-            return;
+        const sceneEl = document.querySelector('a-scene');
+        if (!sceneEl) {
+          console.error("A-Frame sahnesi bulunamadı.");
+          alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
+          return;
         }
 
-        // Canvas'ı resim verisine dönüştür
-        const screenshotDataURL = arScreenshotCanvas.toDataURL('image/png');
+        const videoElement = document.querySelector('video');
+        if (!videoElement || videoElement.readyState < 2) {
+          console.error("Kamera video elementi bulunamadı veya hazır değil.");
+          alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
+          return;
+        }
 
-        if (!screenshotDataURL || screenshotDataURL === 'data:,') {
-            console.warn("Çekilen fotoğraf boş veya geçersiz. Görüntü yakalanamadı. Kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
+        const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
+        if (!arWebGLCanvas) {
+          console.error("A-Frame render canvas'ı bulunamadı.");
+          alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
+          return;
+        }
+
+        try {
+          videoElement.pause();
+
+          const combinedCanvas = document.createElement("canvas");
+          let captureWidth = videoElement.videoWidth;
+          let captureHeight = videoElement.videoHeight;
+
+          if (captureWidth === 0 || captureHeight === 0) {
+              console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
+              captureWidth = window.innerWidth;
+              captureHeight = window.innerHeight;
+          }
+
+          const resolutionMultiplier = 2;	
+
+          combinedCanvas.width = captureWidth * resolutionMultiplier;
+          combinedCanvas.height = captureHeight * resolutionMultiplier;
+
+          const ctx = combinedCanvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          
+          let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
+
+          if (!arCanvasForScreenshot) {
+              console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
+              alert("Fotoğraf çekilemedi: 3D model katmanı bulunamadı.");
+              return;
+          }
+
+          ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          
+          const screenshotDataURL = combinedCanvas.toDataURL('image/png');
+
+          if (screenshotDataURL === 'data:,') {
+            console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
             alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
             return;
+          }
+
+          const link = document.createElement('a');
+          link.href = screenshotDataURL;
+          link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
+
+        } catch (error) {
+          console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
+          alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
+        } finally {
+            if (videoElement.paused) {
+                videoElement.play();
+            }
         }
+      }
 
-        const link = document.createElement('a');
-        link.href = screenshotDataURL;
-        link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        console.log("AR fotoğrafı başarıyla alındı ve indirildi (A-Frame'in birleşik canvas'ından).");
-
-    } catch (error) {
-        console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
-        alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
-    }
-}
       // AR sahnesini sıfırlama ve hedef arama moduna dönme
       function resetARScene() {
 			console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
@@ -333,7 +362,7 @@ async function takeScreenshot() {
 		
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek 3 İnşaallah</button>
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek 1 İnşaallah</button>
     <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
 
   </body>
