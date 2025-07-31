@@ -10,35 +10,63 @@
 
 
     <style>
-      /* Buton stilleri aynı kalıyor */
-      .capture-button {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 15px 30px;
-        font-size: 1.2em;
-        background-color: #4CAF50; /* Yeşil */
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        z-index: 1000; /* AR sahnesinin üzerinde görünmesi için */
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        transition: background-color 0.3s ease;
-      }
-      .capture-button:hover {
-        background-color: #45a049;
-      }
-      video {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
+        
+  /* Butonları içeren ana konteyner */
+  .button-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex; /* Butonları yanyana sıralamak için */
+    gap: 15px; /* Butonlar arasına boşluk eklemek için */
+    z-index: 1000;
+  }
 
+  /* Tüm butonlar için ortak stil */
+  .button-container button {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+  }
+
+  /* Fotoğraf Çek butonu */
+  #takeScreenshotButton {
+    background-color: #4CAF50; /* Yeşil */
+  }
+  #takeScreenshotButton:hover {
+    background-color: #45a049;
+  }
+
+  /* Yeniden Hedef Ara butonu */
+  #resetARButton {
+    background-color: #2196F3; /* Mavi */
+  }
+  #resetARButton:hover {
+    background-color: #1a71c2;
+  }
+
+  /* Video Kaydını Başlat butonu */
+  #startButton {
+    background-color: #FFC107; /* Sarı */
+  }
+  #startButton:hover {
+    background-color: #e0a800;
+  }
+
+  /* Video Kaydını Durdur butonu */
+  #stopButton {
+    background-color: #f44336; /* Kırmızı */
+  }
+  #stopButton:hover {
+    background-color: #d32f2f;
+  }
+ 
+      
       /* Yükleniyor ekranını gizle (bu genellikle MindAR'ın ilk yüklemesinde görünür) */
      
       
@@ -385,6 +413,102 @@
 			Howler.stop();
 			console.log("Tüm Howler.js sesleri durduruldu.");
       }
+		
+		
+		let mediaRecorder;
+		let recordedBlobs;
+		let stream; // Stream değişkenini global olarak tanımla
+
+		// HTML elementlerini al
+		const startButton = document.getElementById('startButton');
+		const stopButton = document.getElementById('stopButton');
+
+		// Butonları başlangıçta doğru duruma getir
+		startButton.disabled = false;
+		stopButton.disabled = true;
+
+		// Kayıt başlatma işlevi
+		async function startRecording() {
+			console.log("Kayıt başlatılıyor...");
+			const sceneEl = document.querySelector('a-scene');
+			const arWebGLCanvas = sceneEl.renderer.domElement;
+
+			if (!arWebGLCanvas) {
+				alert("Video kaydedilemedi: AR içeriği canvas'ı bulunamadı.");
+				return;
+			}
+
+			try {
+				// 1. Canvas'tan video akışını al
+				const videoStream = arWebGLCanvas.captureStream(60); // 60 FPS olarak ayarla (isteğe bağlı)
+
+				// 2. Mikrofon ses akışını al
+				const audioStream = await navigator.mediaDevices.getUserMedia({
+					audio: true
+				});
+
+				// 3. İki akışı birleştir
+				const combinedStream = new MediaStream();
+				videoStream.getTracks().forEach(track => combinedStream.addTrack(track));
+				audioStream.getTracks().forEach(track => combinedStream.addTrack(track));
+
+				stream = combinedStream; // Birleştirilmiş akışı global değişkene ata
+				recordedBlobs = [];
+
+				mediaRecorder = new MediaRecorder(stream, {
+					mimeType: 'video/webm; codecs=vp9'
+				});
+
+				mediaRecorder.ondataavailable = (event) => {
+					if (event.data && event.data.size > 0) {
+						recordedBlobs.push(event.data);
+					}
+				};
+
+				mediaRecorder.onstop = (event) => {
+					const superBuffer = new Blob(recordedBlobs, {
+						type: 'video/webm'
+					});
+					const videoURL = window.URL.createObjectURL(superBuffer);
+
+					const link = document.createElement('a');
+					link.href = videoURL;
+					link.download = `MindAR_AR_Video_${new Date().getTime()}.webm`;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+
+					window.URL.revokeObjectURL(videoURL);
+				};
+
+				mediaRecorder.start();
+				console.log('Kayıt başladı.');
+
+				startButton.disabled = true;
+				stopButton.disabled = false;
+
+			} catch (e) {
+				console.error('Kayıt başlatılamadı:', e);
+				alert('Video ve ses kaydı için izinler gerekli. Hata detayı: ' + e.message);
+			}
+		}
+
+		// Kayıt durdurma işlevi
+		function stopRecording() {
+			console.log("Kayıt durduruluyor...");
+			if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+				mediaRecorder.stop();
+				stream.getTracks().forEach(track => track.stop()); // Mikrofon ve kamera akışını durdur
+			}
+			startButton.disabled = false;
+			stopButton.disabled = true;
+		}
+
+		// Butonlara olay dinleyicileri ekle
+		startButton.addEventListener('click', startRecording);
+		stopButton.addEventListener('click', stopRecording);
+
+
     </script>
   </head>
   <body>
@@ -442,8 +566,12 @@
 		
     </a-scene>
 
-    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek 1 İnşaallah</button>
-    <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
+    <div class="button-container">
+  <button id="takeScreenshotButton" onclick="takeScreenshot()">Fotoğraf Çek</button>
+  <button id="resetARButton" onclick="resetARScene()">Yeniden Hedef Ara</button>
+  <button id="startButton">Video Kaydını Başlat</button>
+  <button id="stopButton">Video Kaydını Durdur</button>
+</div>
 
   </body>
 </html>
