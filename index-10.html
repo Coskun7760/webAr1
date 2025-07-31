@@ -418,7 +418,73 @@
 		
 		
 		
-		let mediaRecorder;
+	
+
+    </script>
+  </head>
+  <body>
+    <a-scene
+      mindar-image="imageTargetSrc: ./targetsMulti.mind; filterMinCF:0.0001; filterBeta: 0.001;"
+      vr-mode-ui="enabled: false"
+	  color-space="sRGB" renderer="antialias: true; precision: high; alpha: true; logarithmicDepthBuffer: true;"
+      device-orientation-permission-ui="enabled: false"
+      webgl-renderer="preserveDrawingBuffer: true;"  
+      screenshot="" > 
+      <a-assets>
+        <a-asset-item id="model1" src="https://coskun7760.github.io/webAr1/muze-12.gltf"> </a-asset-item>
+		<a-asset-item id="model2" src="https://coskun7760.github.io/webAr1/muze-123.gltf"> </a-asset-item> 
+		<a-asset-item id="model3" src="https://coskun7760.github.io/webAr1/muze-1234.gltf"> </a-asset-item> 
+		  
+        <audio id="modelSound1" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>		  
+		  
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
+        <a-gltf-model
+          id="animatedModel"
+		  rotation="0 0 0"
+          position="0 -0.5 0.1"
+          scale="0.5 0.5 0.5"
+          src="#model1"
+          animation-mixer="timeScale: 1"
+          visible="false"> </a-gltf-model>
+      </a-entity>
+		
+	 <a-entity id="mytarget1" mytarget mindar-image-target="targetIndex: 1">
+        <a-gltf-model
+          id="animatedModel1"
+		  rotation="0 0 0"
+          position="0 -0.5 0.1"
+          scale="0.5 0.5 0.5"
+          src="#model2"
+          animation-mixer="timeScale: 1"
+          visible="false"> </a-gltf-model>
+      </a-entity>
+		
+		 <a-entity id="mytarget2" mytarget mindar-image-target="targetIndex: 2">
+        <a-gltf-model
+          id="animatedModel2"
+		  rotation="0 0 0"
+          position="0 -0.5 0.1"
+          scale="0.5 0.5 0.5"
+          src="#model3"
+          animation-mixer="timeScale: 1"
+          visible="false"> </a-gltf-model>
+      </a-entity>
+		
+		
+    </a-scene>
+
+    <div class="button-container">
+		<button id="takeScreenshotButton" >Fotoğraf Çek 7</button>
+		<button id="recordButton">Video Çek</button>
+		<button id="resetARButton" >Yeniden Hedef Ara</button>
+	</div> 
+	  
+	  <script>
+       	let mediaRecorder;
 let recordedBlobs;
 let stream;
 let isRecording = false;
@@ -520,69 +586,7 @@ function handleRecordButtonClick() {
 recordButton.addEventListener('click', handleRecordButtonClick);
 takeScreenshotButton.addEventListener('click', takeScreenshot);
 // ... diğer fonksiyonlar (takeScreenshot, resetARScene vb.) aynı kalabilir ...
-
     </script>
-  </head>
-  <body>
-    <a-scene
-      mindar-image="imageTargetSrc: ./targetsMulti.mind; filterMinCF:0.0001; filterBeta: 0.001;"
-      vr-mode-ui="enabled: false"
-	  color-space="sRGB" renderer="antialias: true; precision: high; alpha: true; logarithmicDepthBuffer: true;"
-      device-orientation-permission-ui="enabled: false"
-      webgl-renderer="preserveDrawingBuffer: true;"  
-      screenshot="" > 
-      <a-assets>
-        <a-asset-item id="model1" src="https://coskun7760.github.io/webAr1/muze-12.gltf"> </a-asset-item>
-		<a-asset-item id="model2" src="https://coskun7760.github.io/webAr1/muze-123.gltf"> </a-asset-item> 
-		<a-asset-item id="model3" src="https://coskun7760.github.io/webAr1/muze-1234.gltf"> </a-asset-item> 
-		  
-        <audio id="modelSound1" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>		  
-		  
-      </a-assets>
-
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
-        <a-gltf-model
-          id="animatedModel"
-		  rotation="0 0 0"
-          position="0 -0.5 0.1"
-          scale="0.5 0.5 0.5"
-          src="#model1"
-          animation-mixer="timeScale: 1"
-          visible="false"> </a-gltf-model>
-      </a-entity>
-		
-	 <a-entity id="mytarget1" mytarget mindar-image-target="targetIndex: 1">
-        <a-gltf-model
-          id="animatedModel1"
-		  rotation="0 0 0"
-          position="0 -0.5 0.1"
-          scale="0.5 0.5 0.5"
-          src="#model2"
-          animation-mixer="timeScale: 1"
-          visible="false"> </a-gltf-model>
-      </a-entity>
-		
-		 <a-entity id="mytarget2" mytarget mindar-image-target="targetIndex: 2">
-        <a-gltf-model
-          id="animatedModel2"
-		  rotation="0 0 0"
-          position="0 -0.5 0.1"
-          scale="0.5 0.5 0.5"
-          src="#model3"
-          animation-mixer="timeScale: 1"
-          visible="false"> </a-gltf-model>
-      </a-entity>
-		
-		
-    </a-scene>
-
-    <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()">Fotoğraf Çek 3</button>
-		<button id="recordButton">Video Çek</button>
-		<button id="resetARButton" onclick="resetARScene()">Yeniden Hedef Ara</button>
-	</div> 
 
   </body>
 </html>
