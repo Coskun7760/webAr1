@@ -87,97 +87,81 @@
         autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
       });
 
-      AFRAME.registerComponent("mytarget", {
-        init: function () {
-          const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
-          const sceneEl = document.querySelector('a-scene');
-          // const animatedModel = document.querySelector('#animatedModel');
-			
-		  const animatedModel = el.querySelector('a-gltf-model');
-          // Bileşen seviyesinde bayraklar
-          this.targetFoundOnce = false;  // Hedefin en az bir kez algılanıp algılanmadığını takip eder
-          this.isModelAttachedToTarget = true; // Modelin şu anda hedefin içinde mi yoksa sahneye sabitlenmiş mi olduğunu gösterir
+     AFRAME.registerComponent("mytarget", {
+    init: function () {
+        const el = this.el; // MindAR hedef varlığı
+        const sceneEl = document.querySelector('a-scene');
 
-          // MindAR'ın UI overlay elementini bulalım
-          let mindarUiOverlay = null;
-		 
-    	  let backgroundMusic = null;
-		  this.currentTarget = -1;
-          // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
-          sceneEl.addEventListener('loaded', () => {
-              mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
-              if (mindarUiOverlay) {
-                  console.log("MindAR UI Overlay bulundu.");
-				  console.log(mindarUiOverlay);
-                  // Sayfa yüklendiğinde tarama UI'ını başlangıçta gizli tut.
-                  // CSS kuralımız zaten bunu yapıyor, buraya ek kod gerekmez.
-                  // MindAR'ın kendi 'hidden' sınıfını manuel eklemeyeceğiz
-                  // çünkü CSS'imiz .mindar-ui-overlay.mindar-ui-scanning'i direkt gizliyor.
-              } else {
-                  console.warn("MindAR UI Overlay elementi bulunamadı. Hedef arama UI'ını kontrol etmek mümkün olmayabilir.");
-              }		  
-				
-          });		
-				
-			
-          // Hedef bulunduğunda
-          	el.addEventListener("targetFound", (event) => {
+        let backgroundMusic = null;
+        this.currentTarget = -1;
+
+        // Modelin yüklenip yüklenmediğini kontrol etmek için bir bayrak
+        this.isModelLoaded = false;
+        let animatedModel = null;
+
+        // Model yüklendiğinde çalışacak olay dinleyicisi
+        el.addEventListener("model-loaded", () => {
+            console.log("Model yüklemesi tamamlandı.");
+            animatedModel = el.querySelector('a-gltf-model');
+            if (animatedModel) {
+                this.isModelLoaded = true;
+            }
+        });
+
+        // Hedef bulunduğunda
+        el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
-			  
-			 // const targetIndex = el.getAttribute('mindar-image-target').targetIndex;
-			// Doğru Yöntem: targetIndex'i MindAR bileşeninin verisinden alıyoruz 
-			 const targetIndex = el.components['mindar-image-target'].data.targetIndex;
-			   // Bu hedefe ait ses değişkenini bulma
-				
-		
+            
+            if (!this.isModelLoaded || !animatedModel) {
+                console.warn("Hedef bulundu ancak model henüz yüklenmedi. Lütfen bekleyin.");
+                // Modeli tekrar sorgulayıp atama yapmayı dene
+                animatedModel = el.querySelector('a-gltf-model');
+                if (!animatedModel) return; // Model hala yoksa, daha fazla işlem yapma
+            }
+
+            const targetIndex = el.components['mindar-image-target'].data.targetIndex;
+
             if (targetIndex === 0) {
                 backgroundMusic = modelSound1;
             } else if (targetIndex === 1) {
                 backgroundMusic = modelSound2;
-            } else if (targetIndex === 2) {
+            } else {
                 backgroundMusic = null;
             }
-			  
 
-				
-		    if (backgroundMusic && (!backgroundMusic.playing() || (backgroundMusic.playing() && this.currentTarget!=targetIndex) )) {
-				Howler.stop(); 
-			 	backgroundMusic.play();
-			}
-			else if (!backgroundMusic)
-			{
-				Howler.stop(); 
-			}
-								
-			if (this.currentTarget!=targetIndex)
-			{
-				this.currentTarget = targetIndex;
-			}
-	  
-            // KRİTİK DÜZELTME: İlk olarak, sahnedeki TÜM 3D modelleri gizle
-			// Bu, önceki hedefin modelinin ekranda kalmasını engeller.
-			document.querySelectorAll('a-gltf-model').forEach(model => {
-				model.setAttribute('visible', false);
-			});
+            if (backgroundMusic && (!backgroundMusic.playing() || (backgroundMusic.playing() && this.currentTarget !== targetIndex))) {
+                Howler.stop();
+                backgroundMusic.play();
+            } else if (!backgroundMusic) {
+                Howler.stop();
+            }
 
-			// 4. Hedefi tekrar gösterince: MindAR hedefi tekrar tanısın ve model tekrar hedefe sabitlensin.
-			// Modelin hedefe geri eklenmesi:
-			if (!this.isModelAttachedToTarget) {
-				console.log("Model hedefe geri ekleniyor.");
-				sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
-				el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
+            if (this.currentTarget !== targetIndex) {
+                this.currentTarget = targetIndex;
+            }
 
-				// Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
-				animatedModel.setAttribute('position', '0 -0.5 0.1');
-				animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-				animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
+            // KRİTİK DÜZELTME: Sahnedeki TÜM 3D modelleri gizle
+            document.querySelectorAll('a-gltf-model').forEach(model => {
+                model.setAttribute('visible', false);
+            });
 
-				this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
-			}
+            // Modelin hedefe geri eklenmesi:
+            if (!this.isModelAttachedToTarget) {
+                console.log("Model hedefe geri ekleniyor.");
+                sceneEl.object3D.remove(animatedModel.object3D);
+                el.object3D.add(animatedModel.object3D);
 
-			// Modeli görünür yap
-			animatedModel.setAttribute('visible', true);          	
-          });
+                animatedModel.setAttribute('position', '0 -0.5 0.1');
+                animatedModel.setAttribute('rotation', '0 0 0');
+                animatedModel.setAttribute('scale', '0.5 0.5 0.5');
+
+                this.isModelAttachedToTarget = true;
+            }
+            
+            // Modeli görünür yap
+            animatedModel.setAttribute('visible', true);
+        });
+
 
           // Hedef kaybedildiğinde
           el.addEventListener("targetLost", (event) => {
