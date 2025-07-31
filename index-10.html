@@ -478,7 +478,7 @@
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" >Fotoğraf Çek 9</button>
+		<button id="takeScreenshotButton" >Fotoğraf Çek 1</button>
 		<button id="recordButton">Video Çek</button>
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
@@ -489,63 +489,82 @@ let mediaRecorder;
 let recordedBlobs;
 let stream;
 let isRecording = false;
-
-// ffmpeg nesnesini oluştur
-const { createFFmpeg, fetchFile } = FFmpeg;
-const ffmpeg = createFFmpeg({ log: true });
+let animationFrameId; // Döngüyü durdurmak için kullanılacak
 
 // HTML elementlerini al
 const recordButton = document.getElementById('recordButton');
+// Fotoğraf çekme butonu varsa, onu da alabiliriz
 const takeScreenshotButton = document.getElementById('takeScreenshotButton');
-const resetARButton = document.getElementById('resetARButton');
+
+
+// Tek birleşik canvas
+const combinedCanvas = document.createElement('canvas');
+const ctx = combinedCanvas.getContext('2d');
+document.body.appendChild(combinedCanvas);
+combinedCanvas.style.display = 'none'; // Canvas'ı gizle
+
 
 // Buton durumlarını güncelleyen yardımcı fonksiyon
-function updateButtonState(recording, isConverting = false) {
+function updateButtonState(recording) {
     isRecording = recording;
-    if (isConverting) {
-        recordButton.textContent = 'Dönüştürülüyor...';
-        recordButton.style.backgroundColor = '#6c757d'; // Gri renk
-        recordButton.disabled = true;
-        takeScreenshotButton.disabled = true;
-        resetARButton.disabled = true;
-    } else if (isRecording) {
+    if (isRecording) {
         recordButton.textContent = 'Kaydı Durdur';
         recordButton.style.backgroundColor = '#f44336'; // Kırmızı renk
         recordButton.disabled = false;
-        takeScreenshotButton.disabled = true;
-        resetARButton.disabled = true;
+        // Fotoğraf çekme butonu varsa, kayıtta devre dışı bırak
+        if (takeScreenshotButton) {
+            takeScreenshotButton.disabled = true;
+        }
     } else {
         recordButton.textContent = 'Video Çek';
         recordButton.style.backgroundColor = '#FFC107'; // Sarı renk
         recordButton.disabled = false;
-        takeScreenshotButton.disabled = false;
-        resetARButton.disabled = false;
+        // Fotoğraf çekme butonu varsa, kayıttan sonra etkinleştir
+        if (takeScreenshotButton) {
+            takeScreenshotButton.disabled = false;
+        }
     }
 }
 
 updateButtonState(false);
 
+
 async function startRecording() {
     console.log("Kayıt başlatılıyor...");
     const sceneEl = document.querySelector('a-scene');
+    const videoElement = document.querySelector('video');
     const arWebGLCanvas = sceneEl.renderer.domElement;
 
-    if (!arWebGLCanvas) {
-        alert("Video kaydedilemedi: AR içeriği canvas'ı bulunamadı.");
+    if (!sceneEl || !videoElement || !arWebGLCanvas || videoElement.readyState < 2) {
+        alert("Video kaydedilemedi: Gerekli elementler bulunamadı veya kamera hazır değil.");
         return;
     }
 
     try {
-        const videoStream = arWebGLCanvas.captureStream(60); 
-        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const combinedStream = new MediaStream();
+        // Canvas boyutlarını kameranın doğal boyutlarına ayarla
+        combinedCanvas.width = videoElement.videoWidth;
+        combinedCanvas.height = videoElement.videoHeight;
 
-        videoStream.getTracks().forEach(track => combinedStream.addTrack(track));
+        // Her karede canvas'ı güncelleme döngüsünü başlat
+        function drawFrame() {
+            // Önce kamera videosunu çiz
+            ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
+            // Sonra AR içeriğini çiz
+            ctx.drawImage(arWebGLCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
+            animationFrameId = requestAnimationFrame(drawFrame);
+        }
+        animationFrameId = requestAnimationFrame(drawFrame);
+
+        // Birleşik canvas'tan video ve ses akışını al
+        const canvasStream = combinedCanvas.captureStream(60); 
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        const combinedStream = new MediaStream();
+        canvasStream.getTracks().forEach(track => combinedStream.addTrack(track));
         audioStream.getTracks().forEach(track => combinedStream.addTrack(track));
 
         stream = combinedStream;
         recordedBlobs = [];
-
         mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
 
         mediaRecorder.ondataavailable = (event) => {
@@ -554,41 +573,19 @@ async function startRecording() {
             }
         };
 
-        mediaRecorder.onstop = async () => {
-            console.log("Kayıt durduruldu, dönüştürme başlıyor...");
-            updateButtonState(false, true); // Dönüştürme durumu
-
-            // ffmpeg'i yükle
-            if (!ffmpeg.isLoaded()) {
-                await ffmpeg.load();
-            }
-
-            // Blobları birleştirip webm dosyası oluştur
+        mediaRecorder.onstop = () => {
+            cancelAnimationFrame(animationFrameId); // Döngüyü durdur
             const superBuffer = new Blob(recordedBlobs, { type: 'video/webm' });
-            const videoFile = new File([superBuffer], 'input.webm', { type: 'video/webm' });
-
-            // ffmpeg sanal dosya sistemine dosyayı yaz
-            ffmpeg.FS('writeFile', 'input.webm', await fetchFile(videoFile));
-
-            // Dönüştürme komutunu çalıştır (H.264 codec)
-            await ffmpeg.run('-i', 'input.webm', '-c:v', 'libx264', '-crf', '23', '-preset', 'fast', 'output.mp4');
-            
-            // Oluşan mp4 dosyasını oku
-            const data = ffmpeg.FS('readFile', 'output.mp4');
-
-            // MP4 blobu oluştur ve indir
-            const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
-            const videoURL = window.URL.createObjectURL(mp4Blob);
+            const videoURL = window.URL.createObjectURL(superBuffer);
 
             const link = document.createElement('a');
             link.href = videoURL;
-            link.download = `MindAR_AR_Video_${new Date().getTime()}.mp4`;
+            link.download = `MindAR_AR_Video_${new Date().getTime()}.webm`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(videoURL);
             
-            // Buton durumlarını eski haline getir
             updateButtonState(false);
         };
 
@@ -599,6 +596,7 @@ async function startRecording() {
     } catch (e) {
         console.error('Kayıt başlatılamadı:', e);
         alert('Video ve ses kaydı için izinler gerekli. Hata detayı: ' + e.message);
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
         updateButtonState(false);
     }
 }
@@ -619,9 +617,8 @@ function handleRecordButtonClick() {
     }
 }
 
-// Olay dinleyicilerini tanımla
+// Olay dinleyicisini tanımla
 recordButton.addEventListener('click', handleRecordButtonClick);
-
 // Diğer fonksiyonlar (takeScreenshot, resetARScene) aynı kalıyor.
 // takeScreenshotButton.addEventListener('click', takeScreenshot);
 // resetARButton.addEventListener('click', resetARScene);
