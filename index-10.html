@@ -7,7 +7,7 @@
 	<script src="./js/mindar-image-aframe.prod.js"></script>
 	<script src="./js/aframe-extras.min.js"></script>
 	<script src="./js/howler.min.js"></script>
-
+	<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.9.7/dist/ffmpeg.min.js"></script>
 
     <style>
         
@@ -478,16 +478,21 @@
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" >Fotoğraf Çek 7</button>
+		<button id="takeScreenshotButton" >Fotoğraf Çek 9</button>
 		<button id="recordButton">Video Çek</button>
-		<button id="resetARButton" >Yeniden Hedef Ara</button>
+		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
 	  
 	  <script>
-       	let mediaRecorder;
+		  
+let mediaRecorder;
 let recordedBlobs;
 let stream;
 let isRecording = false;
+
+// ffmpeg nesnesini oluştur
+const { createFFmpeg, fetchFile } = FFmpeg;
+const ffmpeg = createFFmpeg({ log: true });
 
 // HTML elementlerini al
 const recordButton = document.getElementById('recordButton');
@@ -495,16 +500,24 @@ const takeScreenshotButton = document.getElementById('takeScreenshotButton');
 const resetARButton = document.getElementById('resetARButton');
 
 // Buton durumlarını güncelleyen yardımcı fonksiyon
-function updateButtonState(recording) {
+function updateButtonState(recording, isConverting = false) {
     isRecording = recording;
-    if (isRecording) {
+    if (isConverting) {
+        recordButton.textContent = 'Dönüştürülüyor...';
+        recordButton.style.backgroundColor = '#6c757d'; // Gri renk
+        recordButton.disabled = true;
+        takeScreenshotButton.disabled = true;
+        resetARButton.disabled = true;
+    } else if (isRecording) {
         recordButton.textContent = 'Kaydı Durdur';
         recordButton.style.backgroundColor = '#f44336'; // Kırmızı renk
+        recordButton.disabled = false;
         takeScreenshotButton.disabled = true;
         resetARButton.disabled = true;
     } else {
         recordButton.textContent = 'Video Çek';
         recordButton.style.backgroundColor = '#FFC107'; // Sarı renk
+        recordButton.disabled = false;
         takeScreenshotButton.disabled = false;
         resetARButton.disabled = false;
     }
@@ -523,7 +536,7 @@ async function startRecording() {
     }
 
     try {
-        const videoStream = arWebGLCanvas.captureStream(60);
+        const videoStream = arWebGLCanvas.captureStream(60); 
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const combinedStream = new MediaStream();
 
@@ -541,16 +554,41 @@ async function startRecording() {
             }
         };
 
-        mediaRecorder.onstop = () => {
+        mediaRecorder.onstop = async () => {
+            console.log("Kayıt durduruldu, dönüştürme başlıyor...");
+            updateButtonState(false, true); // Dönüştürme durumu
+
+            // ffmpeg'i yükle
+            if (!ffmpeg.isLoaded()) {
+                await ffmpeg.load();
+            }
+
+            // Blobları birleştirip webm dosyası oluştur
             const superBuffer = new Blob(recordedBlobs, { type: 'video/webm' });
-            const videoURL = window.URL.createObjectURL(superBuffer);
+            const videoFile = new File([superBuffer], 'input.webm', { type: 'video/webm' });
+
+            // ffmpeg sanal dosya sistemine dosyayı yaz
+            ffmpeg.FS('writeFile', 'input.webm', await fetchFile(videoFile));
+
+            // Dönüştürme komutunu çalıştır (H.264 codec)
+            await ffmpeg.run('-i', 'input.webm', '-c:v', 'libx264', '-crf', '23', '-preset', 'fast', 'output.mp4');
+            
+            // Oluşan mp4 dosyasını oku
+            const data = ffmpeg.FS('readFile', 'output.mp4');
+
+            // MP4 blobu oluştur ve indir
+            const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
+            const videoURL = window.URL.createObjectURL(mp4Blob);
+
             const link = document.createElement('a');
             link.href = videoURL;
-            link.download = `MindAR_AR_Video_${new Date().getTime()}.webm`;
+            link.download = `MindAR_AR_Video_${new Date().getTime()}.mp4`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(videoURL);
+            
+            // Buton durumlarını eski haline getir
             updateButtonState(false);
         };
 
@@ -573,7 +611,6 @@ function stopRecording() {
     }
 }
 
-// Butonun tıklama olayını yöneten ana fonksiyon
 function handleRecordButtonClick() {
     if (isRecording) {
         stopRecording();
@@ -584,6 +621,10 @@ function handleRecordButtonClick() {
 
 // Olay dinleyicilerini tanımla
 recordButton.addEventListener('click', handleRecordButtonClick);
+
+// Diğer fonksiyonlar (takeScreenshot, resetARScene) aynı kalıyor.
+// takeScreenshotButton.addEventListener('click', takeScreenshot);
+// resetARButton.addEventListener('click', resetARScene);
 takeScreenshotButton.addEventListener('click', takeScreenshot);
 // ... diğer fonksiyonlar (takeScreenshot, resetARScene vb.) aynı kalabilir ...
     </script>
