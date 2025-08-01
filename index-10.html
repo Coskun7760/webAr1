@@ -244,26 +244,28 @@
 // Tarayıcı sekmesinin görünürlüğünü izle
 document.addEventListener('visibilitychange', () => {
     const mytargetComponent = document.querySelector('a-entity[mytarget]').components['mytarget'];
-    const animatedModel = document.querySelector(`#animatedModel${mytargetComponent.currentTarget}`);
+    const currentTargetIndex = mytargetComponent.currentTarget;
+    const animatedModel = document.querySelector(`#animatedModel${currentTargetIndex}`);
+    const backgroundMusic = (currentTargetIndex === 0) ? modelSound1 : (currentTargetIndex === 1) ? modelSound2 : null;
 
     if (document.hidden) {
-        console.log("Tarayıcı sekmesi gizlendi. Tüm ses ve animasyonlar durduruluyor.");
-        Howler.stop();
+        console.log("Tarayıcı sekmesi gizlendi. Ses ve animasyon duraklatılıyor.");
+        
         if (animatedModel) {
-            animatedModel.setAttribute('animation-mixer', { timeScale: 0 }); // Animasyonu durdur
+            animatedModel.setAttribute('animation-mixer', { timeScale: 0 });
+        }
+        if (backgroundMusic && backgroundMusic.playing()) {
+            backgroundMusic.pause();
         }
     } else {
-        // Sayfa tekrar görünür olduğunda, eğer hedef hala görünüyorsa animasyonu devam ettir
-        console.log("Tarayıcı sekmesi tekrar görünür oldu.");
+        console.log("Tarayıcı sekmesi tekrar görünür oldu. Ses ve animasyon devam ettiriliyor.");
+        
         if (mytargetComponent.isModelAttachedToTarget) {
             if (animatedModel) {
-                animatedModel.setAttribute('animation-mixer', { timeScale: 1 }); // Animasyonu tekrar başlat
+                animatedModel.setAttribute('animation-mixer', { timeScale: 1 });
             }
-            const currentTargetIndex = mytargetComponent.currentTarget;
-            if (currentTargetIndex === 0) {
-                modelSound1.play();
-            } else if (currentTargetIndex === 1) {
-                modelSound2.play();
+            if (backgroundMusic) {
+                backgroundMusic.play();
             }
         }
     }
@@ -274,15 +276,20 @@ document.addEventListener('visibilitychange', () => {
 	  
 	   // *** YENİ KOD: Animasyonu durdurma ***
     const mytargetComponent = document.querySelector('a-entity[mytarget]').components['mytarget'];
-    const animatedModel = document.querySelector(`#animatedModel${mytargetComponent.currentTarget}`);
+    const currentTargetIndex = mytargetComponent.currentTarget;
+    const animatedModel = document.querySelector(`#animatedModel${currentTargetIndex}`);
+    
+    // YENİ KOD: Sadece tanımlı olan arka plan müziğini ve animasyonu duraklat
     if (animatedModel) {
-        animatedModel.setAttribute('animation-mixer', { timeScale: 0 }); // Animasyonu durdur
+        animatedModel.setAttribute('animation-mixer', { timeScale: 0 }); 
     }
-	  
-	  // *** DEĞİŞİKLİK BURADA BAŞLIYOR ***
-    // Fotoğraf çekme işlemine başlamadan önce tüm Howler.js seslerini durdur.
-    Howler.stop();
-    console.log("Fotoğraf çekimi için tüm sesler durduruldu.");
+    const backgroundMusic = (currentTargetIndex === 0) ? modelSound1 : (currentTargetIndex === 1) ? modelSound2 : null;
+    if (backgroundMusic && backgroundMusic.playing()) {
+        backgroundMusic.pause();
+    }
+    
+    console.log("Fotoğraf çekimi için ses ve animasyon duraklatıldı.");
+
     // *** DEĞİŞİKLİK BURADA BİTİYOR ***
 
     const sceneEl = document.querySelector('a-scene');
@@ -447,16 +454,13 @@ document.addEventListener('visibilitychange', () => {
         }
 		
 		 // *** DEĞİŞİKLİK BURADA BAŞLIYOR ***
-        // *** YENİ KOD: Animasyonu ve sesi tekrar başlatma ***
+       // YENİ KOD: Model hala görünüyorsa animasyonu ve sesi devam ettir
         if (mytargetComponent.isModelAttachedToTarget) {
             if (animatedModel) {
-                animatedModel.setAttribute('animation-mixer', { timeScale: 1 }); // Animasyonu tekrar başlat
+                animatedModel.setAttribute('animation-mixer', { timeScale: 1 });
             }
-            const currentTargetIndex = mytargetComponent.currentTarget;
-            if (currentTargetIndex === 0) {
-                modelSound1.play();
-            } else if (currentTargetIndex === 1) {
-                modelSound2.play();
+            if (backgroundMusic) {
+                backgroundMusic.play();
             }
         }
         // *** DEĞİŞİKLİK BURADA BİTİYOR ***
