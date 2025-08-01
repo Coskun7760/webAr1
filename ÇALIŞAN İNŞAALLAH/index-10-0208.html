@@ -3,10 +3,10 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
       
-  	<script src="./js/aframe.min.js"></script>
-	<script src="./js/mindar-image-aframe.prod.js"></script>
-	<script src="./js/aframe-extras.min.js"></script>
-	<script src="./js/howler.min.js"></script>
+  	<script src="../js/aframe.min.js"></script>
+	<script src="../js/mindar-image-aframe.prod.js"></script>
+	<script src="../js/aframe-extras.min.js"></script>
+	<script src="../js/howler.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.9.7/dist/ffmpeg.min.js"></script>
 
     <style>
@@ -103,9 +103,6 @@
 		 
     	  let backgroundMusic = null;
 		  this.currentTarget = -1;
-			
-			
-			
           // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
           sceneEl.addEventListener('loaded', () => {
               mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
@@ -239,51 +236,9 @@
         },
       });
 		
-	 
-
-// Tarayıcı sekmesinin görünürlüğünü izle
-document.addEventListener('visibilitychange', () => {
-    const mytargetComponent = document.querySelector('a-entity[mytarget]').components['mytarget'];
-    const animatedModel = document.querySelector(`#animatedModel${mytargetComponent.currentTarget}`);
-
-    if (document.hidden) {
-        console.log("Tarayıcı sekmesi gizlendi. Tüm ses ve animasyonlar durduruluyor.");
-        Howler.stop();
-        if (animatedModel) {
-            animatedModel.setAttribute('animation-mixer', { timeScale: 0 }); // Animasyonu durdur
-        }
-    } else {
-        // Sayfa tekrar görünür olduğunda, eğer hedef hala görünüyorsa animasyonu devam ettir
-        console.log("Tarayıcı sekmesi tekrar görünür oldu.");
-        if (mytargetComponent.isModelAttachedToTarget) {
-            if (animatedModel) {
-                animatedModel.setAttribute('animation-mixer', { timeScale: 1 }); // Animasyonu tekrar başlat
-            }
-            const currentTargetIndex = mytargetComponent.currentTarget;
-            if (currentTargetIndex === 0) {
-                modelSound1.play();
-            } else if (currentTargetIndex === 1) {
-                modelSound2.play();
-            }
-        }
-    }
-});
 	
   async function takeScreenshot() {
     console.log("AR fotoğrafı çekiliyor...");
-	  
-	   // *** YENİ KOD: Animasyonu durdurma ***
-    const mytargetComponent = document.querySelector('a-entity[mytarget]').components['mytarget'];
-    const animatedModel = document.querySelector(`#animatedModel${mytargetComponent.currentTarget}`);
-    if (animatedModel) {
-        animatedModel.setAttribute('animation-mixer', { timeScale: 0 }); // Animasyonu durdur
-    }
-	  
-	  // *** DEĞİŞİKLİK BURADA BAŞLIYOR ***
-    // Fotoğraf çekme işlemine başlamadan önce tüm Howler.js seslerini durdur.
-    Howler.stop();
-    console.log("Fotoğraf çekimi için tüm sesler durduruldu.");
-    // *** DEĞİŞİKLİK BURADA BİTİYOR ***
 
     const sceneEl = document.querySelector('a-scene');
     if (!sceneEl) {
@@ -445,21 +400,6 @@ document.addEventListener('visibilitychange', () => {
         if (videoElement.paused) {
             videoElement.play();
         }
-		
-		 // *** DEĞİŞİKLİK BURADA BAŞLIYOR ***
-        // *** YENİ KOD: Animasyonu ve sesi tekrar başlatma ***
-        if (mytargetComponent.isModelAttachedToTarget) {
-            if (animatedModel) {
-                animatedModel.setAttribute('animation-mixer', { timeScale: 1 }); // Animasyonu tekrar başlat
-            }
-            const currentTargetIndex = mytargetComponent.currentTarget;
-            if (currentTargetIndex === 0) {
-                modelSound1.play();
-            } else if (currentTargetIndex === 1) {
-                modelSound2.play();
-            }
-        }
-        // *** DEĞİŞİKLİK BURADA BİTİYOR ***
     }
 }
 
