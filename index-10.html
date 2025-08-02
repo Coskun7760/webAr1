@@ -97,7 +97,7 @@ let activeSound = null;
       AFRAME.registerComponent("mytarget", {
         init: function () {
           const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
-          const sceneEl = document.querySelector('a-scene');
+        
           // const animatedModel = document.querySelector('#animatedModel');
 			
 		  let animatedModel = null;
@@ -117,6 +117,7 @@ let activeSound = null;
 			 // Modelin yüklenmesini bekleyelim
 			el.addEventListener("model-loaded", () => {
 			  console.log("Model yüklemesi tamamlandı.");
+			  const sceneEl = document.querySelector('a-scene');
 			  // Şimdi animatedModel değişkenini güvenli bir şekilde atayabiliriz
 			  animatedModel = el.querySelector('a-gltf-model');
 			  if (animatedModel) {
@@ -563,7 +564,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 7</button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 1</button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
