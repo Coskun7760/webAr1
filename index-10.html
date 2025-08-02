@@ -117,7 +117,7 @@ let activeSound = null;
 			 
 			
           // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
-          sceneEl.addEventListener('loaded', () => {
+      /*    sceneEl.addEventListener('loaded', () => {
               mindarUiOverlay = document.querySelector('.mindar-ui-overlay.mindar-ui-scanning');
               if (mindarUiOverlay) {
                   console.log("MindAR UI Overlay bulundu.");
@@ -130,11 +130,11 @@ let activeSound = null;
                   console.warn("MindAR UI Overlay elementi bulunamadı. Hedef arama UI'ını kontrol etmek mümkün olmayabilir.");
               }		
 			  
-			//  animatedModel = el.querySelector('a-gltf-model');
+			 animatedModel = el.querySelector('a-gltf-model');
 				
           });		
 				
-			
+		*/	
           // Hedef bulunduğunda
           	el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
@@ -555,7 +555,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 1</button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 3</button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
