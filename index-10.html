@@ -136,129 +136,9 @@ let activeSound = null;
 				
 		*/	
           // Hedef bulunduğunda
-          	el.addEventListener("targetFound", (event) => {
-            console.log("AR Hedefi algılandı!");
-			
-			 // const targetIndex = el.getAttribute('mindar-image-target').targetIndex;
-			// Doğru Yöntem: targetIndex'i MindAR bileşeninin verisinden alıyoruz 
-			 const targetIndex = el.components['mindar-image-target'].data.targetIndex;
-			   // Bu hedefe ait ses değişkenini bulma
+         
 			
 			
-				
-            if (targetIndex === 0) {
-                backgroundMusic = modelSound1;
-            } else if (targetIndex === 1) {
-                backgroundMusic = modelSound2;
-            } else if (targetIndex === 2) {
-                backgroundMusic = null;
-            }
-			  
-			// Hedef bulunduğunda aktif modeli ve sesi belirle
-			activeModel = animatedModel;
-			activeSound = backgroundMusic;
-
-			console.log("Model H B =");
-			console.log(activeModel);
-			console.log("Ses H B =");
-			console.log(activeSound);
-				
-		    if (backgroundMusic && (!backgroundMusic.playing() || (backgroundMusic.playing() && this.currentTarget!=targetIndex) )) {
-				Howler.stop(); 
-			 	backgroundMusic.play();
-			}
-			else if (!backgroundMusic)
-			{
-				Howler.stop(); 
-			}
-								
-			if (this.currentTarget!=targetIndex)
-			{
-				this.currentTarget = targetIndex;
-			}
-	  
-            // KRİTİK DÜZELTME: İlk olarak, sahnedeki TÜM 3D modelleri gizle
-			// Bu, önceki hedefin modelinin ekranda kalmasını engeller.
-			document.querySelectorAll('a-gltf-model').forEach(model => {
-				model.setAttribute('visible', false);
-			});
-
-			// 4. Hedefi tekrar gösterince: MindAR hedefi tekrar tanısın ve model tekrar hedefe sabitlensin.
-			// Modelin hedefe geri eklenmesi:
-			if (!this.isModelAttachedToTarget) {
-				console.log("Model hedefe geri ekleniyor.");
-				sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
-				el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
-
-				// Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
-				animatedModel.setAttribute('position', '0 -0.5 0.1');
-				animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-				animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
-
-				this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
-			}
-
-			// Modeli görünür yap
-			animatedModel.setAttribute('visible', true);          	
-          });
-
-          // Hedef kaybedildiğinde
-          el.addEventListener("targetLost", (event) => {
-            console.log("AR Hedefi kaybedildi!");
-			console.log("Model H K =");
-			console.log(activeModel);
-			console.log("Ses H K =");
-			console.log(activeSound);
-            // 2. Hedef kaybolduğunda (kameradan çıkınca): 3D model olduğu yerde sabit kalsın (kaybolmasın).
-            // Hedef daha önce algılandıysa VE model hala hedefe bağlıysa, sahneye taşı
-            if (this.isModelAttachedToTarget) {
-                console.log("Model sahneye sabitleniyor.");
-              
-                // Modeli hedeften kaldır
-                el.object3D.remove(animatedModel.object3D);
-                
-                // Modeli doğrudan sahneye ekle (sahne referanslı pozisyon)
-                sceneEl.object3D.add(animatedModel.object3D);
-
-            
-				const setPositionVector = new THREE.Vector3(0, -75, -450);     // Kameradan 3 birim önde, ortada.
-				const setQuaternion = new THREE.Quaternion().identity();   // Hiç dönüş yok (0 0 0 Euler açısı gibi).
-				const setScaleVector = new THREE.Vector3(100, 100,  100);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
-				
-				
-				// Modelin pozisyon, rotasyon ve ölçeğini bu manuel değerlere ayarla
-				animatedModel.object3D.position.copy(setPositionVector);
-				animatedModel.object3D.quaternion.copy(setQuaternion);
-				animatedModel.object3D.scale.copy(setScaleVector);
-
-			 
-				// !!! BURADAKİ ÇIKTI ÖNEMLİ !!!
-				// Modelin setAttribute sonrası aldığı değerleri konsola yazdır
-				const checkPos = new THREE.Vector3();
-				animatedModel.object3D.getWorldPosition(checkPos);
-				const checkRot = new THREE.Quaternion();
-				animatedModel.object3D.getWorldQuaternion(checkRot);
-				const checkScale = new THREE.Vector3();
-				animatedModel.object3D.getWorldScale(checkScale);
-
-				console.log("--- setAttribute Sonrası Modelin GERÇEK Dünya Değerleri (Kontrol) ---");
-				console.log("Pozisyon:", checkPos.x.toFixed(2), checkPos.y.toFixed(2), checkPos.z.toFixed(2));
-				const checkEulerRot = new THREE.Euler().setFromQuaternion(checkRot, 'YXZ');
-				console.log("Dönme (Euler):", THREE.MathUtils.radToDeg(checkEulerRot.x).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.y).toFixed(0), THREE.MathUtils.radToDeg(checkEulerRot.z).toFixed(0));
-				console.log("Boyut:", checkScale.x.toFixed(2), checkScale.y.toFixed(2), checkScale.z.toFixed(2));
-				console.log("------------------------------------------------------------------");
-				
-                this.isModelAttachedToTarget = false; // Modelin artık hedefe bağlı olmadığını işaretle
-            }                  
-         			  
-			  // KRİTİK DÜZELTME: Hedef kaybolduğunda MindAR 'hidden' sınıfını siliyor.
-            // Bu yüzden biz devreye girip MindAR'ın UI'ını tekrar gizliyoruz.
-            if (mindarUiOverlay) {
-                mindarUiOverlay.style.setProperty('display', 'none', 'important');
-                console.log("MindAR arama UI'ı hedef kaybedildiğinde JavaScript tarafından tekrar gizlendi.");
-            }
-            // Müzik çalmaya devam edecek, bu kısımda durdurmuyoruz.
-          });
         },
       });
 		
@@ -555,7 +435,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 1</button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 3</button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
