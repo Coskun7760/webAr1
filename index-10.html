@@ -87,6 +87,11 @@
         autoplay: false // Müziğin otomatik başlamasını istemiyoruz, targetFound ile başlayacak
       });
 
+// Global değişkenleri burada tanımlıyoruz, böylece her yerden erişilebilir.
+let myTargetComponentInstance; // Bileşen referansını tutacak
+let activeModel = null;
+let activeSound = null;
+		
       AFRAME.registerComponent("mytarget", {
         init: function () {
           const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
@@ -131,7 +136,11 @@
 			// Doğru Yöntem: targetIndex'i MindAR bileşeninin verisinden alıyoruz 
 			 const targetIndex = el.components['mindar-image-target'].data.targetIndex;
 			   // Bu hedefe ait ses değişkenini bulma
-				
+			
+			// Hedef bulunduğunda aktif modeli ve sesi belirle
+			activeModel = animatedModel;
+			activeSound = backgroundMusic;
+
 		
             if (targetIndex === 0) {
                 backgroundMusic = modelSound1;
@@ -241,35 +250,27 @@
 		
 	 
 
-// Tarayıcı sekmesinin görünürlüğünü izle
-document.addEventListener('visibilitychange', () => {
-    const mytargetComponent = document.querySelector('a-entity[mytarget]').components['mytarget'];
-    const currentTargetIndex = mytargetComponent.currentTarget;
-    const animatedModel = document.querySelector(`#animatedModel${currentTargetIndex}`);
-    const backgroundMusic = (currentTargetIndex === 0) ? modelSound1 : (currentTargetIndex === 1) ? modelSound2 : null;
-
-    if (document.hidden) {
-        console.log("Tarayıcı sekmesi gizlendi. Ses ve animasyon duraklatılıyor.");
-        
-        if (animatedModel) {
-            animatedModel.setAttribute('animation-mixer', { timeScale: 0 });
-        }
-        if (backgroundMusic && backgroundMusic.playing()) {
-            backgroundMusic.pause();
-        }
-    } else {
-        console.log("Tarayıcı sekmesi tekrar görünür oldu. Ses ve animasyon devam ettiriliyor.");
-        
-        if (mytargetComponent.isModelAttachedToTarget) {
-            if (animatedModel) {
-                animatedModel.setAttribute('animation-mixer', { timeScale: 1 });
-            }
-            if (backgroundMusic) {
-                backgroundMusic.play();
-            }
-        }
-    }
-});
+	// Tarayıcı sekmesinin görünürlüğünü izle
+	document.addEventListener('visibilitychange', () => {
+		if (document.hidden) {
+			console.log("Tarayıcı sekmesi gizlendi. Ses ve animasyon duraklatılıyor.");
+			if (activeModel) {
+				activeModel.setAttribute('animation-mixer', { timeScale: 0 });
+			}
+			if (activeSound && activeSound.playing()) {
+				activeSound.pause();
+			}
+		} else {
+			console.log("Tarayıcı sekmesi tekrar görünür oldu. Ses ve animasyon devam ettiriliyor.");
+			if (activeModel) {
+				activeModel.setAttribute('animation-mixer', { timeScale: 1 });
+			}
+			if (activeSound) {
+				activeSound.play();
+			}
+		}
+	});
+		
 	
   async function takeScreenshot() {
     console.log("AR fotoğrafı çekiliyor...");
@@ -280,18 +281,17 @@ document.addEventListener('visibilitychange', () => {
     const animatedModel = document.querySelector(`#animatedModel${currentTargetIndex}`);
     
     // YENİ KOD: Sadece tanımlı olan arka plan müziğini ve animasyonu duraklat
-    if (animatedModel) {
-        animatedModel.setAttribute('animation-mixer', { timeScale: 0 }); 
+    // Global değişkenleri kullanarak ses ve animasyonu duraklat
+    if (activeModel) {
+        activeModel.setAttribute('animation-mixer', { timeScale: 0 });
     }
-    const backgroundMusic = (currentTargetIndex === 0) ? modelSound1 : (currentTargetIndex === 1) ? modelSound2 : null;
-    if (backgroundMusic && backgroundMusic.playing()) {
-        backgroundMusic.pause();
+    if (activeSound && activeSound.playing()) {
+        activeSound.pause();
     }
-    
     console.log("Fotoğraf çekimi için ses ve animasyon duraklatıldı.");
-
     // *** DEĞİŞİKLİK BURADA BİTİYOR ***
 
+	  
     const sceneEl = document.querySelector('a-scene');
     if (!sceneEl) {
         console.error("A-Frame sahnesi bulunamadı.");
@@ -453,16 +453,15 @@ document.addEventListener('visibilitychange', () => {
             videoElement.play();
         }
 		
-		 // *** DEĞİŞİKLİK BURADA BAŞLIYOR ***
-       // YENİ KOD: Model hala görünüyorsa animasyonu ve sesi devam ettir
-        if (mytargetComponent.isModelAttachedToTarget) {
-            if (animatedModel) {
-                animatedModel.setAttribute('animation-mixer', { timeScale: 1 });
-            }
-            if (backgroundMusic) {
-                backgroundMusic.play();
-            }
+		// *** DEĞİŞİKLİK BURADA BAŞLIYOR ***
+        // Global değişkenleri kullanarak ses ve animasyonu devam ettir
+        if (activeModel) {
+            activeModel.setAttribute('animation-mixer', { timeScale: 1 });
         }
+        if (activeSound) {
+            activeSound.play();
+        }
+        console.log("Ses ve animasyon tekrar başlatıldı.");
         // *** DEĞİŞİKLİK BURADA BİTİYOR ***
     }
 }
