@@ -89,8 +89,7 @@
 
 // Global değişkenleri burada tanımlıyoruz, böylece her yerden erişilebilir.
 let myTargetComponentInstance; // Bileşen referansını tutacak
-let activeModel = null;
-let activeSound = null;
+
 		
 		
 		
@@ -135,7 +134,7 @@ let activeSound = null;
           // Hedef bulunduğunda
           	el.addEventListener("targetFound", (event) => {
             console.log("AR Hedefi algılandı!");
-			  
+			
 			 // const targetIndex = el.getAttribute('mindar-image-target').targetIndex;
 			// Doğru Yöntem: targetIndex'i MindAR bileşeninin verisinden alıyoruz 
 			 const targetIndex = el.components['mindar-image-target'].data.targetIndex;
@@ -145,7 +144,11 @@ let activeSound = null;
 			activeModel = animatedModel;
 			activeSound = backgroundMusic;
 
-		
+			console.log("Model H B =");
+			console.log(activeModel);
+			console.log("Ses H B =");
+			console.log(activeSound);
+				
             if (targetIndex === 0) {
                 backgroundMusic = modelSound1;
             } else if (targetIndex === 1) {
@@ -198,7 +201,10 @@ let activeSound = null;
           // Hedef kaybedildiğinde
           el.addEventListener("targetLost", (event) => {
             console.log("AR Hedefi kaybedildi!");
-
+			console.log("Model H K =");
+			console.log(activeModel);
+			console.log("Ses H K =");
+			console.log(activeSound);
             // 2. Hedef kaybolduğunda (kameradan çıkınca): 3D model olduğu yerde sabit kalsın (kaybolmasın).
             // Hedef daha önce algılandıysa VE model hala hedefe bağlıysa, sahneye taşı
             if (this.isModelAttachedToTarget) {
