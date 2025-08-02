@@ -140,14 +140,7 @@ let myTargetComponentInstance; // Bileşen referansını tutacak
 			 const targetIndex = el.components['mindar-image-target'].data.targetIndex;
 			   // Bu hedefe ait ses değişkenini bulma
 			
-			// Hedef bulunduğunda aktif modeli ve sesi belirle
-			activeModel = animatedModel;
-			activeSound = backgroundMusic;
-
-			console.log("Model H B =");
-			console.log(activeModel);
-			console.log("Ses H B =");
-			console.log(activeSound);
+			
 				
             if (targetIndex === 0) {
                 backgroundMusic = modelSound1;
@@ -157,7 +150,14 @@ let myTargetComponentInstance; // Bileşen referansını tutacak
                 backgroundMusic = null;
             }
 			  
+			// Hedef bulunduğunda aktif modeli ve sesi belirle
+			activeModel = animatedModel;
+			activeSound = backgroundMusic;
 
+			console.log("Model H B =");
+			console.log(activeModel);
+			console.log("Ses H B =");
+			console.log(activeSound);
 				
 		    if (backgroundMusic && (!backgroundMusic.playing() || (backgroundMusic.playing() && this.currentTarget!=targetIndex) )) {
 				Howler.stop(); 
@@ -551,7 +551,7 @@ let myTargetComponentInstance; // Bileşen referansını tutacak
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 3</button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 1</button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
