@@ -91,8 +91,7 @@
 let myTargetComponentInstance; // Bileşen referansını tutacak
 let activeModel = null;
 let activeSound = null;
-		let animatedModel = null;
-		let backgroundMusic = null;
+		
 		
 		
       AFRAME.registerComponent("mytarget", {
@@ -101,6 +100,8 @@ let activeSound = null;
           const sceneEl = document.querySelector('a-scene');
           // const animatedModel = document.querySelector('#animatedModel');
 			
+		let animatedModel = null;
+		let backgroundMusic = null;	
 		  animatedModel = el.querySelector('a-gltf-model');
           // Bileşen seviyesinde bayraklar
           this.targetFoundOnce = false;  // Hedefin en az bir kez algılanıp algılanmadığını takip eder
@@ -544,7 +545,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 1</button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 3</button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
