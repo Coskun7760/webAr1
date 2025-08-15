@@ -214,7 +214,8 @@ let activeSound = null;
 				// Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
 				animatedModel.setAttribute('position', '0 -0.5 0.1');
 				animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-				animatedModel.setAttribute('scale', '${x} ${y} ${z}'); // Varsayılan ölçek
+				animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
+				//animatedModel.setAttribute('scale', '${x} ${y} ${z}'); // Varsayılan ölçek
 
 				this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
 			}
@@ -531,7 +532,7 @@ let activeSound = null;
       <a-assets>
         <a-asset-item id="model1" src="https://coskun7760.github.io/webAr1/FSM-150825ani/FSM-150825ani.gltf"> </a-asset-item>
 		<a-asset-item id="model2" src="https://coskun7760.github.io/webAr1/FSMkemiksiz150825/FSM-150825kemiksiz.gltf"> </a-asset-item> 
-		<a-asset-item id="model3" src="https://coskun7760.github.io/webAr1/FSM-Yazi140825/FSM-SekilYazi.gltf"> </a-asset-item> 
+		<a-asset-item id="model3" src="https://coskun7760.github.io/webAr1/FSM-Yazi150825/FSM-Yazi150825.gltf"> </a-asset-item> 
 		  
         	  
 		  
@@ -566,7 +567,7 @@ let activeSound = null;
           id="animatedModel2"
 		  rotation="0 0 0"
           position="0 -0.5 0.1"
-          scale="0.1 0.1 0.1"
+          scale="0.2 0.2 0.2"
           src="#model3"
           animation-mixer="timeScale: 1"
           visible="false"> </a-gltf-model>
@@ -576,7 +577,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 7 </button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 1 </button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
