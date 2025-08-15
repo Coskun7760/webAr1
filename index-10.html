@@ -120,7 +120,7 @@ let activeSound = null;
     	
 		  this.currentTarget = -1;
 			
-			 
+		  let x=0; let y=0; z=0;
 			
           // A-Frame sahnesi yüklendiğinde, MindAR UI elementini bulmaya çalış
         sceneEl.addEventListener('loaded', () => {
@@ -168,11 +168,11 @@ let activeSound = null;
 			
 				
             if (targetIndex === 0) {
-                backgroundMusic = modelSound1;
+                backgroundMusic = modelSound1; x=0.5; y=0.5; y=0.5;
             } else if (targetIndex === 1) {
-                backgroundMusic = modelSound2;
+                backgroundMusic = modelSound2; x=0.5; y=0.5; y=0.5;
             } else if (targetIndex === 2) {
-                backgroundMusic = null;
+                backgroundMusic = null; x=0.2; y=0.2; y=0.2;
             }
 			  
 			// Hedef bulunduğunda aktif modeli ve sesi belirle
@@ -214,7 +214,7 @@ let activeSound = null;
 				// Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
 				animatedModel.setAttribute('position', '0 -0.5 0.1');
 				animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-				animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
+				animatedModel.setAttribute('scale', '${x} ${y} ${z}'); // Varsayılan ölçek
 
 				this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
 			}
@@ -576,7 +576,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 3 </button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 7 </button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
