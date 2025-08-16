@@ -253,8 +253,8 @@ let activeSound = null;
             
 				
 				const setQuaternion = new THREE.Quaternion().identity();   // Hiç dönüş yok (0 0 0 Euler açısı gibi).
-				const setScaleVector;
-				const setPositionVector;
+				let setScaleVector;
+				let setPositionVector;
 				
 				if (targetIndex === 2) 
 				{
@@ -598,7 +598,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 1 </button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 7 </button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
