@@ -260,11 +260,43 @@ let activeSound = null;
 				
 				if (targetIndex === 2) 
 				{
-					
-					setPositionVector = new THREE.Vector3(0, 75, -450);     // Kameradan 3 birim önde, ortada.
-					setScaleVector = new THREE.Vector3(50, 50, 50);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
-					animatedModel.object3D.position.copy(setPositionVector);
-					animatedModel.object3D.scale.copy(setScaleVector);
+					 // Referans değerleriniz (manuel olarak belirlediğiniz)
+					const BASE_Y = 75;
+					const BASE_Z = -450;
+					const BASE_SCALE = 50;
+
+					// Hedef bir ekran yüksekliği ve genişliği belirleyin
+					// Sizin verdiğiniz çözünürlük değerlerini kullanıyoruz
+					const BASE_SCREEN_HEIGHT = 2664; 
+					const BASE_SCREEN_WIDTH = 1200; 
+
+					// Şu anki ekran boyutlarını alın
+					const currentScreenWidth = window.innerWidth;
+					const currentScreenHeight = window.innerHeight;
+
+					// Modelin konumunu ve boyutunu bu orana göre ayarlayın
+					// Yüksekliğe göre orantılı büyütüp küçültme
+					const heightRatio = currentScreenHeight / BASE_SCREEN_HEIGHT;
+
+					// Genişliğe göre orantılı büyütüp küçültme
+					const widthRatio = currentScreenWidth / BASE_SCREEN_WIDTH;
+
+					// Modelin ölçeği için genişlik oranını kullanıyoruz
+					const newScale = BASE_SCALE * widthRatio;
+
+					// Y konumunu, dikey orana göre ayarlıyoruz
+					const newY = BASE_Y * heightRatio;
+
+					// Z konumunu, ekrandaki boyutuna göre sabitlemek için genişlik oranını kullanıyoruz
+					const newZ = BASE_Z * widthRatio;
+
+					// Modelin konum ve ölçeğini güncelleyin
+					animatedModel.setAttribute('position', `${0} ${newY} ${newZ}`);
+					animatedModel.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
+					// setPositionVector = new THREE.Vector3(0, 75, -450);     // Kameradan 3 birim önde, ortada.
+					// setScaleVector = new THREE.Vector3(50, 50, 50);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
+					// animatedModel.object3D.position.copy(setPositionVector);
+					// animatedModel.object3D.scale.copy(setScaleVector);
             	}
 				else
 				{
