@@ -215,8 +215,8 @@ let activeSound = null;
 				// Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
 				if (targetIndex === 2) 
 				{
-                	animatedModel.setAttribute('position', '0 0.2 0.1');
-					animatedModel.setAttribute('scale', '0.2 0.2 0.2'); // Varsayılan ölçek
+                	animatedModel.setAttribute('position', '0 1 0.1');
+					animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
             	}
 				else
 				{
@@ -260,13 +260,14 @@ let activeSound = null;
 				
 				if (targetIndex === 2) 
 				{
-                	setScaleVector = new THREE.Vector3(50, 50, 50);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
-					setPositionVector = new THREE.Vector3(0, 25, -450);     // Kameradan 3 birim önde, ortada.
+
+					setPositionVector = new THREE.Vector3(0, 75, -450);     // Kameradan 3 birim önde, ortada.
+					setScaleVector = new THREE.Vector3(50, 50, 50);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
             	}
 				else
 				{
-					setScaleVector = new THREE.Vector3(100, 100,  100);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
 					setPositionVector = new THREE.Vector3(0, -75, -450);     // Kameradan 3 birim önde, ortada.
+					setScaleVector = new THREE.Vector3(100, 100,  100);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
 				}	
 				
 				
@@ -589,8 +590,8 @@ let activeSound = null;
         <a-gltf-model
           id="animatedModel2"
 		  rotation="0 0 0"
-          position="0 0.2 0.1"
-          scale="0.2 0.2 0.2"
+          position="0 1 0.1"
+          scale="0.5 0.5 0.5"
           src="#model3"
           animation-mixer="timeScale: 1"
           visible="false"> </a-gltf-model>
