@@ -208,76 +208,26 @@ let activeSound = null;
 			// 4. Hedefi tekrar gösterince: MindAR hedefi tekrar tanısın ve model tekrar hedefe sabitlensin.
 			// Modelin hedefe geri eklenmesi:
 			if (!this.isModelAttachedToTarget) {
-				
+				console.log("Model hedefe geri ekleniyor.");
+				sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
+				el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
 
 				// Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
 				if (targetIndex === 2) 
-				{	 // Modeli doğrudan sahneye ekle (sahne referanslı pozisyon)
-                	sceneEl.object3D.add(animatedModel.object3D);
-                	// animatedModel.setAttribute('position', '0 1 0.1');
-					// animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
-					
-					 
-					let setScaleVector;
-					let setPositionVector;
-
-					
-						 // Referans değerleriniz (manuel olarak belirlediğiniz)
-						const BASE_Y = 129;
-						const BASE_Z = -450;
-						const BASE_SCALE = 41;
-
-						// Hedef bir ekran yüksekliği ve genişliği belirleyin
-						// Sizin verdiğiniz çözünürlük değerlerini kullanıyoruz
-						const BASE_SCREEN_HEIGHT = 2664; 
-						const BASE_SCREEN_WIDTH = 1200; 
-
-						// Şu anki ekran boyutlarını alın
-						const currentScreenWidth = window.innerWidth;
-						const currentScreenHeight = window.innerHeight;
-
-						// Modelin konumunu ve boyutunu bu orana göre ayarlayın
-						// Yüksekliğe göre orantılı büyütüp küçültme
-						const heightRatio = currentScreenHeight / BASE_SCREEN_HEIGHT;
-
-						// Genişliğe göre orantılı büyütüp küçültme
-						const widthRatio = currentScreenWidth / BASE_SCREEN_WIDTH;
-
-
-						// Modelin ölçeği için genişlik oranını kullanıyoruz
-						const newScale = BASE_SCALE * widthRatio;
-
-						// Y konumunu, dikey orana göre ayarlıyoruz
-						const newY = BASE_Y * heightRatio;
-
-						// Z konumunu, ekrandaki boyutuna göre sabitlemek için genişlik oranını kullanıyoruz
-						const newZ = BASE_Z * widthRatio;
-
-						// Modelin konum ve ölçeğini güncelleyin
-						animatedModel.setAttribute('position', `${0} ${newY} ${newZ}`);
-						animatedModel.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
-						 
- 
-					
-					
-					animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-					this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
+				{
+                	animatedModel.setAttribute('position', '0 1 0.1');
+					animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
             	}
 				else
 				{
-					console.log("Model hedefe geri ekleniyor.");
-					sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
-					el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
-					
 					animatedModel.setAttribute('position', '0 -0.5 0.1');
 					animatedModel.setAttribute('scale', '0.5 0.5 0.5'); // Varsayılan ölçek
-					animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
-				
-					//animatedModel.setAttribute('scale', '${x} ${y} ${z}'); // Varsayılan ölçek
-
-					this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
 				}			
-			
+				animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
+				
+				//animatedModel.setAttribute('scale', '${x} ${y} ${z}'); // Varsayılan ölçek
+
+				this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
 			}
 
 			// Modeli görünür yap
@@ -330,7 +280,6 @@ let activeSound = null;
 
 					// Genişliğe göre orantılı büyütüp küçültme
 					const widthRatio = currentScreenWidth / BASE_SCREEN_WIDTH;
-					
 
 					// Modelin ölçeği için genişlik oranını kullanıyoruz
 					const newScale = BASE_SCALE * widthRatio;
@@ -688,7 +637,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 77 </button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 60 </button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
