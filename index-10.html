@@ -260,45 +260,11 @@ let activeSound = null;
 				
 				if (targetIndex === 2) 
 				{
-					 // Ekran boyutlarını alın
-					const screenWidth = window.innerWidth;
-					const screenHeight = window.innerHeight;
-
-					// A-Frame sahnesine ve kameraya erişin
-					const sceneEl = document.querySelector('a-scene');
-					if (!sceneEl.camera) return;
-					const camera = sceneEl.camera;
-					const fov = camera.fov;
-
-					// Modeli ekranın genişliğinin %80'i kadar yapacak ölçeği hesaplayın
-					// Bu değerleri ihtiyacınıza göre değiştirebilirsiniz.
-					const desiredScreenCoverage = 0.8;
-					const distance = 4.5; // Kameradan olan uzaklık (değer arttıkça model küçülür)
-					const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(fov / 2)) * distance;
-					const viewWidth = viewHeight * (screenWidth / screenHeight);
-					const scaleFactor = (viewWidth * desiredScreenCoverage) / animatedModel.object3D.scale.x;
-
-					// Yeni ölçek vektörünü oluşturun
-					const newScaleVector = new THREE.Vector3(scaleFactor, scaleFactor, scaleFactor);
-
-					// Yeni pozisyon vektörünü oluşturun
-					// Modelin üst kısmını ekranın üstüne sabitlemek için Y pozisyonu hesaplanır.
-					const topEdgeOfView = viewHeight / 2;
-					const textHeightInWorld = animatedModel.object3D.scale.y * scaleFactor;
-					const topPadding = 0.2; // Ekran üstünden boşluk bırakmak için
-
-					const newPositionX = 0; // Ekranın merkezine hizalama
-					const newPositionY = topEdgeOfView - (textHeightInWorld / 2) - topPadding;
-					const newPositionZ = -distance; // Kameranın önünde görünmesini sağlar
-
-					const newPositionVector = new THREE.Vector3(newPositionX, newPositionY, newPositionZ);
-
-					// Modeli yeni konum ve boyuta ayarlayın
-					animatedModel.setAttribute('scale', newScaleVector);
-					animatedModel.setAttribute('position', newPositionVector);
-
-					//	setPositionVector = new THREE.Vector3(0, 75, -450);     // Kameradan 3 birim önde, ortada.
-					//	setScaleVector = new THREE.Vector3(50, 50, 50);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
+					
+					setPositionVector = new THREE.Vector3(0, 75, -450);     // Kameradan 3 birim önde, ortada.
+					setScaleVector = new THREE.Vector3(50, 50, 50);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
+					animatedModel.object3D.position.copy(setPositionVector);
+					animatedModel.object3D.scale.copy(setScaleVector);
             	}
 				else
 				{
