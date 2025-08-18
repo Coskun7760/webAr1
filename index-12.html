@@ -174,6 +174,8 @@ let activeSound = null;
                 backgroundMusic = modelSound2; x=0.5; y=0.5; y=0.5;
             } else if (targetIndex === 2) {
                 backgroundMusic = null; x=0.2; y=0.2; y=0.2;
+            } else if (targetIndex === 3) {
+                backgroundMusic = null; x=0.2; y=0.2; y=0.2;
             }
 			  
 			// Hedef bulunduğunda aktif modeli ve sesi belirle
@@ -211,7 +213,7 @@ let activeSound = null;
 				
 
 				// Modelin pozisyonunu hedefe göre varsayılan haline getir (hedef referanslı pozisyon)
-				if (targetIndex === 2) 
+				if (targetIndex === 2 || targetIndex === 3) 
 				{	 // Modeli doğrudan sahneye ekle (sahne referanslı pozisyon)
                 	sceneEl.object3D.add(animatedModel.object3D);
                 	// animatedModel.setAttribute('position', '0 1 0.1');
@@ -308,7 +310,7 @@ let activeSound = null;
 				let setScaleVector;
 				let setPositionVector;
 				
-				if (targetIndex === 2) 
+				if (targetIndex === 2 || targetIndex === 3) 
 				{
 					 // Referans değerleriniz (manuel olarak belirlediğiniz)
 					const BASE_Y = 155;
@@ -644,6 +646,7 @@ let activeSound = null;
         <a-asset-item id="model1" src="https://coskun7760.github.io/webAr1/muze040825/muze040825.gltf"> </a-asset-item>
 		<a-asset-item id="model2" src="https://coskun7760.github.io/webAr1/FSM-150825-3/FSM-150825-3.gltf"> </a-asset-item> 
 		<a-asset-item id="model3" src="https://coskun7760.github.io/webAr1/FSM-Yazi170825/FSM-Yazii-170825.gltf"> </a-asset-item> 
+		<a-asset-item id="model4" src="https://coskun7760.github.io/webAr1/FSM-Yazi170825/FSM-Yazii-170825.gltf"> </a-asset-item>
 		  
         	  
 		  
@@ -680,6 +683,17 @@ let activeSound = null;
           position="0 1 0.1"
           scale="0.5 0.5 0.5"
           src="#model3"
+          animation-mixer="timeScale: 1"
+          visible="false"> </a-gltf-model>
+      </a-entity>
+		
+	  <a-entity id="mytarget3" mytarget mindar-image-target="targetIndex: 3">
+        <a-gltf-model
+          id="animatedModel3"
+		  rotation="0 0 0"
+          position="0 1 0.1"
+          scale="0.5 0.5 0.5"
+          src="#model4"
           animation-mixer="timeScale: 1"
           visible="false"> </a-gltf-model>
       </a-entity>
