@@ -271,8 +271,8 @@ let activeSound = null;
 					sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
 					el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
 					
-					animatedModel.setAttribute('position', '0 -0.5 0.1');
-					animatedModel.setAttribute('scale', '0.7 0.7 0.7'); // Varsayılan ölçek
+					animatedModel.setAttribute('position', '0 -0.6 0.1');
+					animatedModel.setAttribute('scale', '0.77 0.77 0.77'); // Varsayılan ölçek
 					animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
 				
 					//animatedModel.setAttribute('scale', '${x} ${y} ${z}'); // Varsayılan ölçek
@@ -367,7 +367,7 @@ let activeSound = null;
             	}
 				else
 				{
-					setPositionVector = new THREE.Vector3(-35, -75, -450);     // Kameradan 3 birim önde, ortada.
+					setPositionVector = new THREE.Vector3(35, -75, -450);     // Kameradan 3 birim önde, ortada.
 					setScaleVector = new THREE.Vector3(100, 100,  100);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
 					animatedModel.object3D.position.copy(setPositionVector);
 					animatedModel.object3D.scale.copy(setScaleVector);
@@ -684,7 +684,7 @@ let activeSound = null;
           id="animatedModel1"
 		  rotation="0 0 0"
           position="0 -0.5 0.1"
-          scale="0.7 0.7 0.7"
+          scale="0.77 0.77 0.77"
           src="#model2"
           animation-mixer="timeScale: 1"
           visible="false"> </a-gltf-model>
@@ -716,7 +716,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 77 </button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 7 </button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
