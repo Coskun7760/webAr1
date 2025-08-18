@@ -265,6 +265,20 @@ let activeSound = null;
 					animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
 					this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
             	}
+				else if (targetIndex === 1)
+				{
+					console.log("Model hedefe geri ekleniyor.");
+					sceneEl.object3D.remove(animatedModel.object3D); // Sahneden kaldır
+					el.object3D.add(animatedModel.object3D); // Hedefe geri ekle
+					
+					animatedModel.setAttribute('position', '0 -0.5 0.1');
+					animatedModel.setAttribute('scale', '0.7 0.7 0.7'); // Varsayılan ölçek
+					animatedModel.setAttribute('rotation', '0 0 0'); // Varsayılan rotasyon
+				
+					//animatedModel.setAttribute('scale', '${x} ${y} ${z}'); // Varsayılan ölçek
+
+					this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
+				}		,
 				else
 				{
 					console.log("Model hedefe geri ekleniyor.");
@@ -278,7 +292,7 @@ let activeSound = null;
 					//animatedModel.setAttribute('scale', '${x} ${y} ${z}'); // Varsayılan ölçek
 
 					this.isModelAttachedToTarget = true; // Modelin tekrar hedefe bağlı olduğunu işaretle
-				}			
+				}		
 			
 			}
 
@@ -670,7 +684,7 @@ let activeSound = null;
           id="animatedModel1"
 		  rotation="0 0 0"
           position="0 -0.5 0.1"
-          scale="0.5 0.5 0.5"
+          scale="0.7 0.7 0.7"
           src="#model2"
           animation-mixer="timeScale: 1"
           visible="false"> </a-gltf-model>
