@@ -367,7 +367,7 @@ let activeSound = null;
             	}
 				else
 				{
-					setPositionVector = new THREE.Vector3(0, -75, -450);     // Kameradan 3 birim önde, ortada.
+					setPositionVector = new THREE.Vector3(-35, -75, -450);     // Kameradan 3 birim önde, ortada.
 					setScaleVector = new THREE.Vector3(100, 100,  100);         // Orijinal boyutunda (veya '0.5 0.5 0.5' gibi dene).
 					animatedModel.object3D.position.copy(setPositionVector);
 					animatedModel.object3D.scale.copy(setScaleVector);
@@ -716,7 +716,7 @@ let activeSound = null;
     </a-scene>
 
     <div class="button-container">
-		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 77 </button>
+		<button id="takeScreenshotButton" onclick="takeScreenshot()" >Fotoğraf Çek 7 </button>
 
 		<button id="resetARButton"  onclick="resetARScene()">Yeniden Hedef Ara</button>
 	</div> 
