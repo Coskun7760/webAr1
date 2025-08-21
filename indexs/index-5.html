@@ -1,0 +1,297 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v7.0.0/dist/aframe-extras.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/howler@2.2.3/dist/howler.min.js"></script>
+
+    <style>
+      /* Butonu AR sahnesinin üzerinde konumlandırmak için stil */
+      .capture-button {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 30px;
+        font-size: 1.2em;
+        background-color: #4CAF50; /* Yeşil */
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 1000; /* AR sahnesinin üzerinde görünmesi için */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: background-color 0.3s ease;
+      }
+      .capture-button:hover {
+        background-color: #45a049;
+      }
+      /* MindAR tarafından oluşturulan video elemanını bulmak için yardımcı stil */
+      video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    </style>
+
+    <script>
+      var backgroundMusic = new Howl({
+        src: ['https://coskun7760.github.io/webAr1/ses.mp3'],
+        volume: 1.0,
+        autoplay: false
+      });
+
+      // *** YENİ BİR GLOBAL BAYRAK: Modelin sabitlenmiş olup olmadığını takip eder ***
+      let isModelLocked = false; 
+
+      AFRAME.registerComponent("mytarget", {
+        init: function () {
+          const el = this.el; // MindAR hedef varlığı (a-entity mindar-image-target)
+          const animatedModel = document.querySelector('#animatedModel');
+          const sceneEl = document.querySelector('a-scene');
+
+          // *** YENİ: Modelin son bilinen dünya konumunu ve rotasyonunu saklamak için ***
+          let lastWorldPosition = new THREE.Vector3();
+          let lastWorldQuaternion = new THREE.Quaternion();
+
+          // Hedef bulunduğunda
+          el.addEventListener("targetFound", (event) => {
+            console.log("AR Hedefi algılandı!");
+
+            // Modeli görünür yap
+            animatedModel.setAttribute('visible', true);
+
+            // Müzik kontrolü (sadece ilk kez veya durdurulduysa başla)
+            if (backgroundMusic && !backgroundMusic.playing()) {
+                backgroundMusic.play();
+                console.log("Howler.js sesi oynatılıyor.");
+            }
+
+            // *** YENİ: Eğer model kilitliyse, kilidi aç ve hedefe tekrar bağlan ***
+            if (isModelLocked) {
+                console.log("Modelin kilidi açılıyor ve hedefe geri bağlanıyor.");
+                // Modelin görünürlüğünü hedefe bağla (A-Frame'in varsayılanı)
+                animatedModel.setAttribute('visible', true);
+                
+                // Modelin pozisyonunu ve rotasyonunu hedefe göre sıfırla
+                // Bu, modelin tekrar hedefi takip etmesini sağlar.
+                animatedModel.setAttribute('position', '0 -0.5 0.1');
+                animatedModel.setAttribute('rotation', '0 0 0'); 
+                animatedModel.setAttribute('scale', '0.5 0.5 0.5');
+
+                isModelLocked = false; // Kilidi kapat
+            }
+          });
+
+          // Hedef kaybedildiğinde
+          el.addEventListener("targetLost", (event) => {
+            console.log("AR Hedefi kaybedildi!");
+
+            // *** YENİ: Eğer model henüz kilitli değilse, kilitleme işlemini yap ***
+            // Bu kontrol, targetFoundOnce veya benzeri bir mantığın yerini alır.
+            // Sadece modelin aktif olarak takip edildiği durumdan sabitleme durumuna geçişi sağlar.
+            if (!isModelLocked) {
+                console.log("Model hedefe göre konumunu kaybediyor, sabitleme başlıyor.");
+
+                // Modelin o anki dünya konumunu ve rotasyonunu al
+                // Bu, modelin AR hedefi üzerindeki son bilinen konumudur.
+                animatedModel.object3D.getWorldPosition(lastWorldPosition);
+                animatedModel.object3D.getWorldQuaternion(lastWorldQuaternion);
+
+                // Modeli görünür tut
+                animatedModel.setAttribute('visible', true);
+
+                // *** MindAR'ın kendi `mindar-image-target` bileşenini durdurarak takibi durdur ***
+                // Bu, modelin hedefle olan bağlantısını keser ve son konumda kalmasını sağlar.
+                // Not: Bu, aynı hedefin tekrar bulunması durumunda tekrar tetiklenir ve çözülür.
+                // A-Frame, Three.js nesneleri üzerinde çalışır, bu nedenle 'object3D'ye doğrudan erişim sağlıyoruz.
+                // Modelin ebeveynini değiştirmeden pozisyon ve rotasyonu korumak için Three.js matriksleri üzerinde çalışmak gerekebilir
+                // VEYA daha basitçe, modelin bulunduğu a-entity'nin mindar-image-target bileşenini durdurmak.
+                
+                // Bunu yapmanın en pratik yolu, modelin kendisini artık "target" elemanının çocuğu olmaktan çıkarmaktır.
+                // Ancak bu, A-Frame'in DOM yapısını bozabilir.
+                // Alternatif ve daha güvenli yol, modelin Three.js nesnesini manuel olarak konumlandırmaktır:
+                
+                // Modelin mevcut pozisyonunu al (parent'ına göre)
+                // Sonraki adımda bunu kullanmayacağız, sadece A-Frame'in nasıl çalıştığını anlamak için.
+                // const localPos = animatedModel.object3D.position.clone();
+                // const localRot = animatedModel.object3D.quaternion.clone();
+
+                // *** Modelin bağlı olduğu MindAR hedefini (el) görünmez yap ***
+                // Bu, MindAR'ın 3D içeriği yönetmesini engeller ancak kamera akışı devam eder.
+                // Böylece modelin son konumunu koruyabiliriz.
+                el.setAttribute('visible', false); 
+
+                // Ardından modeli, scene'in doğrudan bir çocuğu gibi konumlandır
+                // Bu kritik kısım. Modeli hedeften ayırmak yerine, onu scene'in kendi koordinat sistemine taşıyoruz.
+                // animatedModel.object3D.parent.remove(animatedModel.object3D); // Bu önceki denemede sorunluydu.
+                // sceneEl.object3D.add(animatedModel.object3D); // Bu da sorunluydu.
+
+                // Doğru yöntem: Modelin pozisyonunu doğrudan dünya koordinatlarına göre güncelle
+                // Bunu yapabilmek için modelin "takip" davranışını kapatmamız lazım.
+                // MindAR'ın takip davranışını doğrudan durdurmak yerine, modelin kendisinin konumunu yönetiyoruz.
+                
+                // Eğer model MindAR hedefinin altındaysa, MindAR hedefi görünmez olduğunda model de kaybolur.
+                // Bu yüzden modelin parent'ını değiştirmek ZORUNDAYIZ.
+                // Ama bunu yaparken A-Frame'in kendi sistematiğiyle çakışmamak önemli.
+                // THREE.js dünyasında doğrudan parent'ı değiştirme:
+
+                // Modelin Three.js objesini al
+                const modelObject3D = animatedModel.object3D;
+
+                // Modeli mevcut ebeveyninden (MindAR hedefi) ayır
+                // Bu işlem modelin dünya pozisyonunu korur.
+                el.object3D.remove(modelObject3D);
+
+                // Modeli doğrudan sahneye ekle
+                sceneEl.object3D.add(modelObject3D);
+
+                // Modelin dünya pozisyonunu ve rotasyonunu korumak için doğrudan atama yap
+                modelObject3D.position.copy(lastWorldPosition);
+                modelObject3D.quaternion.copy(lastWorldQuaternion);
+                // Ölçeği de koru
+                modelObject3D.scale.set(0.5, 0.5, 0.5); // A-Frame'deki scale ile aynı olmalı
+
+                isModelLocked = true; // Modeli kilitli olarak işaretle
+                console.log("Model sabitlendi. Konum:", modelObject3D.position);
+            }
+            // Müzik çalmaya devam edecek.
+          });
+        },
+      });
+
+      // Fotoğraf çekme fonksiyonu - AYNI KALDI
+      async function takeScreenshot() {
+        console.log("AR fotoğrafı çekiliyor...");
+
+        const sceneEl = document.querySelector('a-scene');
+        if (!sceneEl) {
+          console.error("A-Frame sahnesi bulunamadı.");
+          alert("Fotoğraf çekilemedi: A-Frame sahnesi bulunamadı.");
+          return;
+        }
+
+        const videoElement = document.querySelector('video');
+        if (!videoElement || videoElement.readyState < 2) {
+          console.error("Kamera video elementi bulunamadı veya hazır değil.");
+          alert("Fotoğraf çekilemedi: Kamera videosu hazır değil veya bulunamadı. Lütfen kamera izni verdiğinizden ve video akışının başladığından emin olun.");
+          return;
+        }
+
+        const arWebGLCanvas = sceneEl.renderer ? sceneEl.renderer.domElement : null;
+        if (!arWebGLCanvas) {
+          console.error("A-Frame render canvas'ı bulunamadı.");
+          alert("Fotoğraf çekilemedi: AR içeriği canvas'ı bulunamadı.");
+          return;
+        }
+
+        try {
+          videoElement.pause();
+
+          const combinedCanvas = document.createElement("canvas");
+          let captureWidth = videoElement.videoWidth;
+          let captureHeight = videoElement.videoHeight;
+
+          if (captureWidth === 0 || captureHeight === 0) {
+              console.warn("Video gerçek piksel boyutları alınamadı. Ekran viewport boyutları kullanılıyor.");
+              captureWidth = window.innerWidth;
+              captureHeight = window.innerHeight;
+          }
+
+          const resolutionMultiplier = 2; 
+
+          combinedCanvas.width = captureWidth * resolutionMultiplier;
+          combinedCanvas.height = captureHeight * resolutionMultiplier;
+
+          const ctx = combinedCanvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          ctx.drawImage(videoElement, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          
+          let arCanvasForScreenshot = sceneEl.components.screenshot.getCanvas('perspective');
+
+          if (!arCanvasForScreenshot) {
+              console.error("A-Frame screenshot canvas'ı 'perspective' bulunamadı.");
+              alert("Fotoğraf çekilemedi: 3D model katmanı bulunamadı.");
+              return;
+          }
+
+          ctx.drawImage(arCanvasForScreenshot, 0, 0, combinedCanvas.width, combinedCanvas.height);
+          
+          const screenshotDataURL = combinedCanvas.toDataURL('image/png');
+
+          if (screenshotDataURL === 'data:,') {
+            console.warn("Çekilen fotoğraf boş veya geçersiz. Tekrar denenecek.");
+            alert("Fotoğraf çekilemedi: Görüntü yakalanamadı. Lütfen kamera akışının aktif olduğundan ve modelin göründüğünden emin olun.");
+            return;
+          }
+
+          const link = document.createElement('a');
+          link.href = screenshotDataURL;
+          link.download = 'MindAR_AR_Fotografi_' + new Date().getTime() + '.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          console.log("AR fotoğrafı başarıyla alındı ve indirildi.");
+
+        } catch (error) {
+          console.error("Fotoğraf çekme sırasında kritik hata oluştu:", error);
+          alert("Fotoğraf çekilemedi. Tarayıcıda bir hata oluştu veya izinler yetersiz. Lütfen konsolu kontrol edin. (Hata detayı: " + error.message + ")");
+        } finally {
+            if (videoElement.paused) {
+                videoElement.play();
+            }
+        }
+      }
+
+      // *** YENİ FONKSİYON: AR sahnesini sıfırlama ve hedef arama moduna dönme ***
+      function resetARScene() {
+          console.log("AR sahnesi sıfırlanıyor ve hedef arama moduna dönülüyor...");
+          // Sayfayı tamamen yeniden yüklemek, MindAR dahil tüm AR bileşenlerini sıfırlamanın en temiz yoludur.
+          location.reload(); 
+          
+          if (backgroundMusic && backgroundMusic.playing()) {
+              backgroundMusic.stop();
+              console.log("Howler.js sesi durduruldu.");
+          }
+      }
+    </script>
+  </head>
+  <body>
+    <a-scene
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: true"
+      webgl-renderer="preserveDrawingBuffer: true;"  
+      screenshot="" > 
+      <a-assets>
+        <a-asset-item id="avatarModel" src="https://coskun7760.github.io/webAr1/muze-12.gltf"></a-asset-item>
+        <audio id="modelSound" src="https://coskun7760.github.io/webAr1/ses.mp3" preload="auto" crossorigin="anonymous"></audio>
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
+        <a-gltf-model
+          id="animatedModel"
+          position="0 -0.5 0.1"
+          scale="0.5 0.5 0.5"
+          src="#avatarModel"
+          animation-mixer="timeScale: 1"
+          visible="false"> </a-gltf-model>
+      </a-entity>
+    </a-scene>
+
+    <button class="capture-button" onclick="takeScreenshot()">Fotoğraf Çek İnşaallah</button>
+    <button class="capture-button" style="bottom: 80px; background-color: #f44336;" onclick="resetARScene()">Yeniden Hedef Ara</button>
+
+  </body>
+</html>
